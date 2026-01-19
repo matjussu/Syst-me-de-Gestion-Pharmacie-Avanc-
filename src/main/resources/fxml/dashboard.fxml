@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Text?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.sgpa.controller.DashboardController"
+            styleClass="dashboard-root"
+            stylesheets="@../css/style.css">
+
+    <!-- Barre laterale gauche -->
+    <left>
+        <VBox styleClass="sidebar" spacing="5" minWidth="220">
+            <padding>
+                <Insets top="20" right="10" bottom="20" left="10"/>
+            </padding>
+
+            <!-- Logo -->
+            <HBox alignment="CENTER" styleClass="sidebar-header">
+                <FontIcon iconLiteral="fas-clinic-medical" iconSize="32" styleClass="sidebar-logo"/>
+                <Text text="SGPA" styleClass="sidebar-title"/>
+            </HBox>
+
+            <Separator/>
+
+            <!-- Menu principal -->
+            <VBox spacing="5" styleClass="menu-section">
+                <Button fx:id="btnDashboard" text="Tableau de bord" onAction="#showDashboard"
+                        styleClass="menu-button, active" maxWidth="Infinity" alignment="CENTER_LEFT">
+                    <graphic><FontIcon iconLiteral="fas-home"/></graphic>
+                </Button>
+
+                <Button fx:id="btnVentes" text="Nouvelle Vente" onAction="#showVentes"
+                        styleClass="menu-button" maxWidth="Infinity" alignment="CENTER_LEFT">
+                    <graphic><FontIcon iconLiteral="fas-cash-register"/></graphic>
+                </Button>
+
+                <Button fx:id="btnHistorique" text="Historique Ventes" onAction="#showHistorique"
+                        styleClass="menu-button" maxWidth="Infinity" alignment="CENTER_LEFT">
+                    <graphic><FontIcon iconLiteral="fas-history"/></graphic>
+                </Button>
+
+                <Button fx:id="btnRetours" text="Retours Produits" onAction="#showRetours"
+                        styleClass="menu-button" maxWidth="Infinity" alignment="CENTER_LEFT">
+                    <graphic><FontIcon iconLiteral="fas-undo-alt"/></graphic>
+                </Button>
+
+                <Separator/>
+
+                <Button fx:id="btnStock" text="Gestion Stock" onAction="#showStock"
+                        styleClass="menu-button" maxWidth="Infinity" alignment="CENTER_LEFT">
+                    <graphic><FontIcon iconLiteral="fas-boxes"/></graphic>
+                </Button>
+
+                <Button fx:id="btnInventaire" text="Inventaire" onAction="#showInventaire"
+                        styleClass="menu-button" maxWidth="Infinity" alignment="CENTER_LEFT">
+                    <graphic><FontIcon iconLiteral="fas-clipboard-check"/></graphic>
+                </Button>
+
+                <Button fx:id="btnMedicaments" text="Medicaments" onAction="#showMedicaments"
+                        styleClass="menu-button" maxWidth="Infinity" alignment="CENTER_LEFT">
+                    <graphic><FontIcon iconLiteral="fas-pills"/></graphic>
+                </Button>
+
+                <Button fx:id="btnCommandes" text="Commandes" onAction="#showCommandes"
+                        styleClass="menu-button" maxWidth="Infinity" alignment="CENTER_LEFT">
+                    <graphic><FontIcon iconLiteral="fas-truck"/></graphic>
+                </Button>
+
+                <Button fx:id="btnPromotions" text="Promotions" onAction="#showPromotions"
+                        styleClass="menu-button" maxWidth="Infinity" alignment="CENTER_LEFT">
+                    <graphic><FontIcon iconLiteral="fas-tags"/></graphic>
+                </Button>
+
+                <Separator/>
+
+                <Button fx:id="btnAlertes" text="Alertes" onAction="#showAlertes"
+                        styleClass="menu-button" maxWidth="Infinity" alignment="CENTER_LEFT">
+                    <graphic><FontIcon iconLiteral="fas-exclamation-triangle"/></graphic>
+                </Button>
+
+                <Button fx:id="btnPredictions" text="Predictions" onAction="#showPredictions"
+                        styleClass="menu-button" maxWidth="Infinity" alignment="CENTER_LEFT">
+                    <graphic><FontIcon iconLiteral="fas-chart-bar"/></graphic>
+                </Button>
+
+                <Button fx:id="btnStatistiques" text="Statistiques" onAction="#showStatistiques"
+                        styleClass="menu-button" maxWidth="Infinity" alignment="CENTER_LEFT">
+                    <graphic><FontIcon iconLiteral="fas-chart-line"/></graphic>
+                </Button>
+
+                <Separator/>
+
+                <!-- Section Administration (visible seulement pour les pharmaciens) -->
+                <Button fx:id="btnUtilisateurs" text="Utilisateurs" onAction="#showUtilisateurs"
+                        styleClass="menu-button" maxWidth="Infinity" alignment="CENTER_LEFT">
+                    <graphic><FontIcon iconLiteral="fas-users-cog"/></graphic>
+                </Button>
+
+                <Button fx:id="btnAudit" text="Journal Audit" onAction="#showAudit"
+                        styleClass="menu-button" maxWidth="Infinity" alignment="CENTER_LEFT">
+                    <graphic><FontIcon iconLiteral="fas-clipboard-list"/></graphic>
+                </Button>
+
+                <Button fx:id="btnBackup" text="Sauvegardes" onAction="#showBackup"
+                        styleClass="menu-button" maxWidth="Infinity" alignment="CENTER_LEFT">
+                    <graphic><FontIcon iconLiteral="fas-database"/></graphic>
+                </Button>
+
+                <Button fx:id="btnSettings" text="Parametres" onAction="#showSettings"
+                        styleClass="menu-button" maxWidth="Infinity" alignment="CENTER_LEFT">
+                    <graphic><FontIcon iconLiteral="fas-cog"/></graphic>
+                </Button>
+            </VBox>
+
+            <!-- Spacer -->
+            <Region VBox.vgrow="ALWAYS"/>
+
+            <!-- Utilisateur connecte -->
+            <VBox styleClass="user-section" spacing="5">
+                <Separator/>
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <FontIcon iconLiteral="fas-user-circle" iconSize="24" styleClass="user-icon"/>
+                    <VBox>
+                        <Label fx:id="lblUserName" text="Utilisateur" styleClass="user-name"/>
+                        <Label fx:id="lblUserRole" text="Role" styleClass="user-role"/>
+                    </VBox>
+                </HBox>
+                <Button text="Deconnexion" onAction="#handleLogout"
+                        styleClass="logout-button" maxWidth="Infinity">
+                    <graphic><FontIcon iconLiteral="fas-sign-out-alt"/></graphic>
+                </Button>
+            </VBox>
+        </VBox>
+    </left>
+
+    <!-- Contenu principal -->
+    <center>
+        <VBox styleClass="main-content">
+            <!-- Header -->
+            <HBox styleClass="content-header" alignment="CENTER_LEFT" spacing="20">
+                <VBox HBox.hgrow="ALWAYS">
+                    <Label fx:id="lblPageTitle" text="Tableau de Bord" styleClass="page-title"/>
+                    <Label fx:id="lblPageSubtitle" text="Vue d'ensemble de votre pharmacie" styleClass="page-subtitle"/>
+                </VBox>
+                <HBox alignment="CENTER_RIGHT" spacing="10">
+                    <Label fx:id="lblDate" styleClass="header-date"/>
+                    <Button styleClass="icon-button" onAction="#refreshData">
+                        <graphic><FontIcon iconLiteral="fas-sync-alt"/></graphic>
+                    </Button>
+                </HBox>
+            </HBox>
+
+            <!-- Zone de contenu dynamique -->
+            <StackPane fx:id="contentArea" VBox.vgrow="ALWAYS" styleClass="content-area">
+                <!-- Dashboard par defaut -->
+                <ScrollPane fitToWidth="true" styleClass="scroll-content">
+                    <VBox spacing="20">
+                        <padding>
+                            <Insets top="20" right="20" bottom="20" left="20"/>
+                        </padding>
+
+                        <!-- Cartes statistiques -->
+                        <HBox spacing="20" styleClass="stats-row">
+                            <VBox styleClass="stat-card, stat-blue" HBox.hgrow="ALWAYS">
+                                <FontIcon iconLiteral="fas-pills" iconSize="32" styleClass="stat-icon"/>
+                                <Label fx:id="lblTotalMedicaments" text="0" styleClass="stat-value"/>
+                                <Label text="Medicaments" styleClass="stat-label"/>
+                            </VBox>
+
+                            <VBox styleClass="stat-card, stat-green" HBox.hgrow="ALWAYS">
+                                <FontIcon iconLiteral="fas-shopping-cart" iconSize="32" styleClass="stat-icon"/>
+                                <Label fx:id="lblVentesJour" text="0" styleClass="stat-value"/>
+                                <Label text="Ventes aujourd'hui" styleClass="stat-label"/>
+                            </VBox>
+
+                            <VBox styleClass="stat-card, stat-orange" HBox.hgrow="ALWAYS">
+                                <FontIcon iconLiteral="fas-exclamation-circle" iconSize="32" styleClass="stat-icon"/>
+                                <Label fx:id="lblAlertesStock" text="0" styleClass="stat-value"/>
+                                <Label text="Alertes Stock" styleClass="stat-label"/>
+                            </VBox>
+
+                            <VBox styleClass="stat-card, stat-red" HBox.hgrow="ALWAYS">
+                                <FontIcon iconLiteral="fas-clock" iconSize="32" styleClass="stat-icon"/>
+                                <Label fx:id="lblAlertesPeremption" text="0" styleClass="stat-value"/>
+                                <Label text="Peremptions proches" styleClass="stat-label"/>
+                            </VBox>
+                        </HBox>
+
+                        <!-- Section Alertes -->
+                        <VBox styleClass="section-card" spacing="15">
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <FontIcon iconLiteral="fas-bell" iconSize="20" styleClass="section-icon"/>
+                                <Label text="Alertes Recentes" styleClass="section-title"/>
+                            </HBox>
+                            <TableView fx:id="tableAlertes" styleClass="alerts-table" maxHeight="200">
+                                <columns>
+                                    <TableColumn fx:id="colAlertType" text="Type" prefWidth="100"/>
+                                    <TableColumn fx:id="colAlertMedicament" text="Medicament" prefWidth="200"/>
+                                    <TableColumn fx:id="colAlertDetail" text="Detail" prefWidth="300"/>
+                                    <TableColumn fx:id="colAlertUrgence" text="Urgence" prefWidth="100"/>
+                                </columns>
+                                <placeholder>
+                                    <Label text="Aucune alerte active"/>
+                                </placeholder>
+                            </TableView>
+                        </VBox>
+
+                        <!-- Section Actions rapides -->
+                        <HBox spacing="20">
+                            <VBox styleClass="section-card" spacing="15" HBox.hgrow="ALWAYS">
+                                <HBox alignment="CENTER_LEFT" spacing="10">
+                                    <FontIcon iconLiteral="fas-bolt" iconSize="20" styleClass="section-icon"/>
+                                    <Label text="Actions Rapides" styleClass="section-title"/>
+                                </HBox>
+                                <HBox spacing="10">
+                                    <Button text="Nouvelle Vente" styleClass="action-button, primary" onAction="#showVentes">
+                                        <graphic><FontIcon iconLiteral="fas-plus"/></graphic>
+                                    </Button>
+                                    <Button text="Ajouter Stock" styleClass="action-button" onAction="#showStock">
+                                        <graphic><FontIcon iconLiteral="fas-box"/></graphic>
+                                    </Button>
+                                    <Button text="Commander" styleClass="action-button" onAction="#showCommandes">
+                                        <graphic><FontIcon iconLiteral="fas-truck"/></graphic>
+                                    </Button>
+                                </HBox>
+                            </VBox>
+                        </HBox>
+
+                    </VBox>
+                </ScrollPane>
+            </StackPane>
+        </VBox>
+    </center>
+
+</BorderPane>

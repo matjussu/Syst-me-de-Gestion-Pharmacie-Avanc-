@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.sgpa.controller.AlerteController"
+      spacing="20" styleClass="view-root">
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <!-- Onglets -->
+    <TabPane fx:id="tabPane" VBox.vgrow="ALWAYS" styleClass="alerts-tabs">
+        <!-- Onglet Stock Bas -->
+        <Tab text="Stock Bas" closable="false">
+            <graphic><FontIcon iconLiteral="fas-boxes" styleClass="tab-icon"/></graphic>
+            <VBox spacing="15" styleClass="tab-content">
+                <padding><Insets top="15" right="15" bottom="15" left="15"/></padding>
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label fx:id="lblStockBasCount" text="0 alerte(s)" styleClass="count-label"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Actualiser" onAction="#handleRefresh" styleClass="action-button">
+                        <graphic><FontIcon iconLiteral="fas-sync-alt"/></graphic>
+                    </Button>
+                </HBox>
+                <TableView fx:id="tableStockBas" VBox.vgrow="ALWAYS" styleClass="data-table">
+                    <columns>
+                        <TableColumn fx:id="colStockMedicament" text="Medicament" prefWidth="250"/>
+                        <TableColumn fx:id="colStockActuel" text="Stock Actuel" prefWidth="120"/>
+                        <TableColumn fx:id="colSeuilMin" text="Seuil Min" prefWidth="100"/>
+                        <TableColumn fx:id="colStockDeficit" text="Deficit" prefWidth="100"/>
+                    </columns>
+                    <placeholder><Label text="Aucune alerte de stock bas"/></placeholder>
+                </TableView>
+            </VBox>
+        </Tab>
+
+        <!-- Onglet Peremption Proche -->
+        <Tab text="Peremption Proche" closable="false">
+            <graphic><FontIcon iconLiteral="fas-clock" styleClass="tab-icon"/></graphic>
+            <VBox spacing="15" styleClass="tab-content">
+                <padding><Insets top="15" right="15" bottom="15" left="15"/></padding>
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label fx:id="lblPeremptionCount" text="0 alerte(s)" styleClass="count-label"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Actualiser" onAction="#handleRefresh" styleClass="action-button">
+                        <graphic><FontIcon iconLiteral="fas-sync-alt"/></graphic>
+                    </Button>
+                </HBox>
+                <TableView fx:id="tablePeremption" VBox.vgrow="ALWAYS" styleClass="data-table">
+                    <columns>
+                        <TableColumn fx:id="colPeremptionMedicament" text="Medicament" prefWidth="200"/>
+                        <TableColumn fx:id="colPeremptionLot" text="N° Lot" prefWidth="120"/>
+                        <TableColumn fx:id="colPeremptionDate" text="Date Peremption" prefWidth="130"/>
+                        <TableColumn fx:id="colPeremptionJours" text="Jours Restants" prefWidth="120"/>
+                        <TableColumn fx:id="colPeremptionQuantite" text="Quantite" prefWidth="80"/>
+                        <TableColumn fx:id="colPeremptionUrgence" text="Urgence" prefWidth="100"/>
+                    </columns>
+                    <placeholder><Label text="Aucune alerte de peremption"/></placeholder>
+                </TableView>
+            </VBox>
+        </Tab>
+
+        <!-- Onglet Lots Perimes -->
+        <Tab text="Lots Perimes" closable="false">
+            <graphic><FontIcon iconLiteral="fas-exclamation-triangle" styleClass="tab-icon, danger"/></graphic>
+            <VBox spacing="15" styleClass="tab-content">
+                <padding><Insets top="15" right="15" bottom="15" left="15"/></padding>
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label fx:id="lblPerimesCount" text="0 lot(s) perime(s)" styleClass="count-label, danger"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Actualiser" onAction="#handleRefresh" styleClass="action-button">
+                        <graphic><FontIcon iconLiteral="fas-sync-alt"/></graphic>
+                    </Button>
+                </HBox>
+                <TableView fx:id="tablePerimes" VBox.vgrow="ALWAYS" styleClass="data-table">
+                    <columns>
+                        <TableColumn fx:id="colPerimesMedicament" text="Medicament" prefWidth="200"/>
+                        <TableColumn fx:id="colPerimesLot" text="N° Lot" prefWidth="120"/>
+                        <TableColumn fx:id="colPerimesDate" text="Date Peremption" prefWidth="130"/>
+                        <TableColumn fx:id="colPerimesQuantite" text="Quantite" prefWidth="80"/>
+                    </columns>
+                    <placeholder><Label text="Aucun lot perime"/></placeholder>
+                </TableView>
+            </VBox>
+        </Tab>
+    </TabPane>
+
+</VBox>

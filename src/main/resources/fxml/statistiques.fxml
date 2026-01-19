@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<ScrollPane xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.sgpa.controller.StatistiquesController"
+            fitToWidth="true" styleClass="statistiques-root">
+    <VBox spacing="20">
+        <padding>
+            <Insets top="20" right="20" bottom="20" left="20"/>
+        </padding>
+
+        <!-- Filtres de periode -->
+        <HBox spacing="20" alignment="CENTER_LEFT" styleClass="filters-bar">
+            <Label text="Periode:" styleClass="filter-label"/>
+            <ComboBox fx:id="comboPeriode" prefWidth="150"/>
+            <Label text="Du:" styleClass="filter-label"/>
+            <DatePicker fx:id="dateDebut"/>
+            <Label text="Au:" styleClass="filter-label"/>
+            <DatePicker fx:id="dateFin"/>
+            <Button text="Actualiser" onAction="#handleRefresh" styleClass="action-button, primary">
+                <graphic><FontIcon iconLiteral="fas-sync-alt"/></graphic>
+            </Button>
+            <Region HBox.hgrow="ALWAYS"/>
+            <ProgressIndicator fx:id="progressIndicator" visible="false" prefWidth="25" prefHeight="25"/>
+        </HBox>
+
+        <!-- Resume chiffres cles -->
+        <HBox spacing="15" styleClass="stats-summary">
+            <VBox styleClass="summary-card" HBox.hgrow="ALWAYS">
+                <Label text="Chiffre d'affaires" styleClass="summary-label"/>
+                <Label fx:id="lblChiffreAffaires" text="0.00 EUR" styleClass="summary-value, primary"/>
+            </VBox>
+            <VBox styleClass="summary-card" HBox.hgrow="ALWAYS">
+                <Label text="Nombre de ventes" styleClass="summary-label"/>
+                <Label fx:id="lblNombreVentes" text="0" styleClass="summary-value"/>
+            </VBox>
+            <VBox styleClass="summary-card" HBox.hgrow="ALWAYS">
+                <Label text="Panier moyen" styleClass="summary-label"/>
+                <Label fx:id="lblPanierMoyen" text="0.00 EUR" styleClass="summary-value"/>
+            </VBox>
+            <VBox styleClass="summary-card" HBox.hgrow="ALWAYS">
+                <Label text="Articles vendus" styleClass="summary-label"/>
+                <Label fx:id="lblArticlesVendus" text="0" styleClass="summary-value"/>
+            </VBox>
+        </HBox>
+
+        <!-- Graphiques ligne 1 -->
+        <HBox spacing="20">
+            <!-- Ventes par jour -->
+            <VBox styleClass="panel" HBox.hgrow="ALWAYS">
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <FontIcon iconLiteral="fas-chart-line" iconSize="18" styleClass="section-icon"/>
+                    <Label text="Evolution des Ventes" styleClass="panel-title"/>
+                </HBox>
+                <LineChart fx:id="chartVentes" VBox.vgrow="ALWAYS" prefHeight="300"
+                           legendVisible="false" animated="false">
+                    <xAxis>
+                        <CategoryAxis label="Date" fx:id="xAxisVentes"/>
+                    </xAxis>
+                    <yAxis>
+                        <NumberAxis label="Montant (EUR)" fx:id="yAxisVentes"/>
+                    </yAxis>
+                </LineChart>
+            </VBox>
+        </HBox>
+
+        <!-- Graphiques ligne 2 -->
+        <HBox spacing="20">
+            <!-- Top medicaments vendus -->
+            <VBox styleClass="panel" HBox.hgrow="ALWAYS">
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <FontIcon iconLiteral="fas-chart-bar" iconSize="18" styleClass="section-icon"/>
+                    <Label text="Top 10 Medicaments Vendus" styleClass="panel-title"/>
+                </HBox>
+                <BarChart fx:id="chartTopMedicaments" VBox.vgrow="ALWAYS" prefHeight="300"
+                          legendVisible="false" animated="false">
+                    <xAxis>
+                        <CategoryAxis label="Medicament" fx:id="xAxisTop"/>
+                    </xAxis>
+                    <yAxis>
+                        <NumberAxis label="Quantite" fx:id="yAxisTop"/>
+                    </yAxis>
+                </BarChart>
+            </VBox>
+
+            <!-- Repartition par type -->
+            <VBox styleClass="panel" prefWidth="350">
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <FontIcon iconLiteral="fas-chart-pie" iconSize="18" styleClass="section-icon"/>
+                    <Label text="Repartition des Alertes" styleClass="panel-title"/>
+                </HBox>
+                <PieChart fx:id="chartAlertes" VBox.vgrow="ALWAYS" prefHeight="300"
+                          labelsVisible="true" legendVisible="true" animated="false"/>
+            </VBox>
+        </HBox>
+
+        <!-- Graphique stock -->
+        <VBox styleClass="panel">
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <FontIcon iconLiteral="fas-boxes" iconSize="18" styleClass="section-icon"/>
+                <Label text="Etat du Stock (Top 15 medicaments)" styleClass="panel-title"/>
+            </HBox>
+            <BarChart fx:id="chartStock" prefHeight="300" legendVisible="true" animated="false">
+                <xAxis>
+                    <CategoryAxis label="Medicament" fx:id="xAxisStock"/>
+                </xAxis>
+                <yAxis>
+                    <NumberAxis label="Quantite" fx:id="yAxisStock"/>
+                </yAxis>
+            </BarChart>
+        </VBox>
+
+    </VBox>
+</ScrollPane>

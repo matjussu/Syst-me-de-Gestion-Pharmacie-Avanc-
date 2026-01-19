@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<ScrollPane xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.sgpa.controller.SettingsController"
+            fitToWidth="true" styleClass="settings-root">
+    <VBox spacing="20">
+        <padding>
+            <Insets top="20" right="20" bottom="20" left="20"/>
+        </padding>
+
+        <!-- Section Pharmacie -->
+        <VBox spacing="15" styleClass="panel">
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <FontIcon iconLiteral="fas-store" iconSize="20" styleClass="section-icon"/>
+                <Label text="Informations Pharmacie" styleClass="panel-title"/>
+            </HBox>
+
+            <GridPane hgap="15" vgap="10">
+                <columnConstraints>
+                    <ColumnConstraints minWidth="150" halignment="RIGHT"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                </columnConstraints>
+
+                <Label text="Nom de la pharmacie:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                <TextField fx:id="txtPharmacieNom" GridPane.columnIndex="1" GridPane.rowIndex="0" maxWidth="400"/>
+
+                <Label text="Adresse:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                <TextField fx:id="txtPharmacieAdresse" GridPane.columnIndex="1" GridPane.rowIndex="1" maxWidth="400"/>
+
+                <Label text="Telephone:" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                <TextField fx:id="txtPharmacieTelephone" GridPane.columnIndex="1" GridPane.rowIndex="2" maxWidth="200"/>
+            </GridPane>
+        </VBox>
+
+        <!-- Section Alertes -->
+        <VBox spacing="15" styleClass="panel">
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <FontIcon iconLiteral="fas-bell" iconSize="20" styleClass="section-icon"/>
+                <Label text="Parametres des Alertes" styleClass="panel-title"/>
+            </HBox>
+
+            <GridPane hgap="15" vgap="10">
+                <columnConstraints>
+                    <ColumnConstraints minWidth="200" halignment="RIGHT"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                </columnConstraints>
+
+                <Label text="Alerte peremption (jours avant):" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                <HBox spacing="10" alignment="CENTER_LEFT" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                    <Spinner fx:id="spinnerPeremption" min="7" max="365" initialValue="90" editable="true" prefWidth="100"/>
+                    <Label text="jours" styleClass="info-text"/>
+                </HBox>
+
+                <Label text="Seuil stock bas par defaut:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                <HBox spacing="10" alignment="CENTER_LEFT" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                    <Spinner fx:id="spinnerStockSeuil" min="1" max="1000" initialValue="10" editable="true" prefWidth="100"/>
+                    <Label text="unites" styleClass="info-text"/>
+                </HBox>
+            </GridPane>
+        </VBox>
+
+        <!-- Section Repertoires -->
+        <VBox spacing="15" styleClass="panel">
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <FontIcon iconLiteral="fas-folder" iconSize="20" styleClass="section-icon"/>
+                <Label text="Repertoires" styleClass="panel-title"/>
+            </HBox>
+
+            <GridPane hgap="15" vgap="10">
+                <columnConstraints>
+                    <ColumnConstraints minWidth="180" halignment="RIGHT"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                    <ColumnConstraints minWidth="100"/>
+                </columnConstraints>
+
+                <Label text="Repertoire des rapports:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                <TextField fx:id="txtRapportsDir" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                <Button text="Parcourir" onAction="#handleBrowseRapports" GridPane.columnIndex="2" GridPane.rowIndex="0" styleClass="action-button-small"/>
+
+                <Label text="Repertoire des sauvegardes:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                <TextField fx:id="txtBackupDir" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                <Button text="Parcourir" onAction="#handleBrowseBackup" GridPane.columnIndex="2" GridPane.rowIndex="1" styleClass="action-button-small"/>
+            </GridPane>
+        </VBox>
+
+        <!-- Section Sauvegardes -->
+        <VBox spacing="15" styleClass="panel">
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <FontIcon iconLiteral="fas-database" iconSize="20" styleClass="section-icon"/>
+                <Label text="Options de Sauvegarde" styleClass="panel-title"/>
+            </HBox>
+
+            <HBox spacing="20" alignment="CENTER_LEFT">
+                <CheckBox fx:id="chkBackupCompression" text="Compresser les sauvegardes (gzip)"/>
+            </HBox>
+        </VBox>
+
+        <!-- Section Interface -->
+        <VBox spacing="15" styleClass="panel">
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <FontIcon iconLiteral="fas-desktop" iconSize="20" styleClass="section-icon"/>
+                <Label text="Interface Utilisateur" styleClass="panel-title"/>
+            </HBox>
+
+            <GridPane hgap="15" vgap="10">
+                <columnConstraints>
+                    <ColumnConstraints minWidth="200" halignment="RIGHT"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                </columnConstraints>
+
+                <Label text="Elements par page (pagination):" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                <ComboBox fx:id="comboPagination" GridPane.columnIndex="1" GridPane.rowIndex="0" prefWidth="150"/>
+
+                <Label text="Format monnaie:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                <ComboBox fx:id="comboMonnaie" GridPane.columnIndex="1" GridPane.rowIndex="1" prefWidth="150"/>
+            </GridPane>
+        </VBox>
+
+        <!-- Boutons d'action -->
+        <HBox spacing="15" alignment="CENTER_RIGHT">
+            <Button text="Reinitialiser" onAction="#handleReset" styleClass="secondary-button">
+                <graphic><FontIcon iconLiteral="fas-undo"/></graphic>
+            </Button>
+            <Button text="Enregistrer" onAction="#handleSave" styleClass="action-button, success">
+                <graphic><FontIcon iconLiteral="fas-save"/></graphic>
+            </Button>
+        </HBox>
+
+        <!-- Message de statut -->
+        <HBox alignment="CENTER">
+            <Label fx:id="lblStatus" styleClass="status-label"/>
+        </HBox>
+
+    </VBox>
+</ScrollPane>

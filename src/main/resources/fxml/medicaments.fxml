@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.sgpa.controller.MedicamentController"
+      spacing="15" styleClass="medicaments-root">
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <!-- En-tete avec recherche et bouton ajouter -->
+    <HBox spacing="15" alignment="CENTER_LEFT">
+        <TextField fx:id="searchField" promptText="Rechercher par nom ou principe actif..."
+                   prefWidth="350" onKeyReleased="#handleSearch"/>
+        <Button onAction="#handleSearch" styleClass="icon-button">
+            <graphic><FontIcon iconLiteral="fas-search"/></graphic>
+        </Button>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Nouveau Medicament" onAction="#handleNew" styleClass="action-button, primary">
+            <graphic><FontIcon iconLiteral="fas-plus"/></graphic>
+        </Button>
+        <Button onAction="#handleRefresh" styleClass="icon-button">
+            <graphic><FontIcon iconLiteral="fas-sync-alt"/></graphic>
+        </Button>
+    </HBox>
+
+    <!-- Contenu principal: Table + Formulaire -->
+    <SplitPane dividerPositions="0.6" VBox.vgrow="ALWAYS">
+        <!-- Table des medicaments -->
+        <VBox spacing="10" styleClass="panel">
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Label text="Catalogue des Medicaments" styleClass="panel-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="lblCount" text="0 medicaments" styleClass="info-text"/>
+            </HBox>
+            <TableView fx:id="tableMedicaments" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="colNom" text="Nom Commercial" prefWidth="180"/>
+                    <TableColumn fx:id="colPrincipe" text="Principe Actif" prefWidth="150"/>
+                    <TableColumn fx:id="colForme" text="Forme" prefWidth="100"/>
+                    <TableColumn fx:id="colDosage" text="Dosage" prefWidth="80"/>
+                    <TableColumn fx:id="colPrix" text="Prix (EUR)" prefWidth="90"/>
+                    <TableColumn fx:id="colOrdonnance" text="Ordonnance" prefWidth="90"/>
+                    <TableColumn fx:id="colActif" text="Actif" prefWidth="60"/>
+                </columns>
+                <placeholder>
+                    <Label text="Aucun medicament"/>
+                </placeholder>
+            </TableView>
+        </VBox>
+
+        <!-- Formulaire d'edition -->
+        <VBox fx:id="formPanel" spacing="15" styleClass="panel, form-panel">
+            <Label fx:id="lblFormTitle" text="Nouveau Medicament" styleClass="panel-title"/>
+
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="form-scroll">
+                <VBox spacing="15">
+                    <padding>
+                        <Insets top="5" right="10" bottom="5" left="5"/>
+                    </padding>
+
+                    <VBox spacing="5">
+                        <Label text="Nom Commercial *" styleClass="form-label"/>
+                        <TextField fx:id="txtNomCommercial" promptText="Ex: Doliprane"/>
+                    </VBox>
+
+                    <VBox spacing="5">
+                        <Label text="Principe Actif *" styleClass="form-label"/>
+                        <TextField fx:id="txtPrincipeActif" promptText="Ex: Paracetamol"/>
+                    </VBox>
+
+                    <HBox spacing="10">
+                        <VBox spacing="5" HBox.hgrow="ALWAYS">
+                            <Label text="Forme Galenique" styleClass="form-label"/>
+                            <ComboBox fx:id="comboForme" maxWidth="Infinity" editable="true"/>
+                        </VBox>
+                        <VBox spacing="5" HBox.hgrow="ALWAYS">
+                            <Label text="Dosage" styleClass="form-label"/>
+                            <TextField fx:id="txtDosage" promptText="Ex: 500mg"/>
+                        </VBox>
+                    </HBox>
+
+                    <HBox spacing="10">
+                        <VBox spacing="5" HBox.hgrow="ALWAYS">
+                            <Label text="Prix Public (EUR) *" styleClass="form-label"/>
+                            <TextField fx:id="txtPrix" promptText="0.00"/>
+                        </VBox>
+                        <VBox spacing="5" HBox.hgrow="ALWAYS">
+                            <Label text="Seuil Minimum *" styleClass="form-label"/>
+                            <Spinner fx:id="spinnerSeuil" min="0" max="9999" initialValue="10" editable="true" maxWidth="Infinity"/>
+                        </VBox>
+                    </HBox>
+
+                    <VBox spacing="5">
+                        <Label text="Description" styleClass="form-label"/>
+                        <TextArea fx:id="txtDescription" promptText="Description du medicament..."
+                                  prefRowCount="3" wrapText="true"/>
+                    </VBox>
+
+                    <HBox spacing="20">
+                        <CheckBox fx:id="chkOrdonnance" text="Necessite une ordonnance"/>
+                        <CheckBox fx:id="chkActif" text="Actif dans le catalogue" selected="true"/>
+                    </HBox>
+                </VBox>
+            </ScrollPane>
+
+            <Separator/>
+
+            <!-- Boutons d'action -->
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Button fx:id="btnDelete" text="Supprimer" onAction="#handleDelete"
+                        styleClass="danger-button" visible="false" managed="false">
+                    <graphic><FontIcon iconLiteral="fas-trash"/></graphic>
+                </Button>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Annuler" onAction="#handleCancel" styleClass="secondary-button"/>
+                <Button fx:id="btnSave" text="Enregistrer" onAction="#handleSave" styleClass="action-button, success">
+                    <graphic><FontIcon iconLiteral="fas-save"/></graphic>
+                </Button>
+            </HBox>
+        </VBox>
+    </SplitPane>
+
+</VBox>

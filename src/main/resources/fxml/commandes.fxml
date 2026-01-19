@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.sgpa.controller.CommandeController"
+      spacing="15" styleClass="commandes-root">
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <!-- En-tete -->
+    <HBox spacing="15" alignment="CENTER_LEFT">
+        <ComboBox fx:id="comboStatutFilter" promptText="Tous les statuts" prefWidth="200"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Nouvelle Commande" onAction="#handleNewOrder" styleClass="action-button, primary">
+            <graphic><FontIcon iconLiteral="fas-plus"/></graphic>
+        </Button>
+        <Button onAction="#handleRefresh" styleClass="icon-button">
+            <graphic><FontIcon iconLiteral="fas-sync-alt"/></graphic>
+        </Button>
+    </HBox>
+
+    <!-- Statistiques -->
+    <HBox spacing="15" styleClass="stats-mini">
+        <HBox spacing="5" alignment="CENTER_LEFT" styleClass="stat-badge">
+            <FontIcon iconLiteral="fas-truck" styleClass="stat-icon-mini"/>
+            <Label fx:id="lblTotal" text="0 commandes"/>
+        </HBox>
+        <HBox spacing="5" alignment="CENTER_LEFT" styleClass="stat-badge, warning">
+            <FontIcon iconLiteral="fas-clock" styleClass="stat-icon-mini"/>
+            <Label fx:id="lblEnAttente" text="0 en attente"/>
+        </HBox>
+        <HBox spacing="5" alignment="CENTER_LEFT" styleClass="stat-badge, success">
+            <FontIcon iconLiteral="fas-check" styleClass="stat-icon-mini"/>
+            <Label fx:id="lblRecues" text="0 recues"/>
+        </HBox>
+    </HBox>
+
+    <!-- Contenu principal -->
+    <SplitPane dividerPositions="0.5" VBox.vgrow="ALWAYS">
+        <!-- Liste des commandes -->
+        <VBox spacing="10" styleClass="panel">
+            <Label text="Commandes" styleClass="panel-title"/>
+            <TableView fx:id="tableCommandes" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="colId" text="N°" prefWidth="60"/>
+                    <TableColumn fx:id="colDate" text="Date" prefWidth="120"/>
+                    <TableColumn fx:id="colFournisseur" text="Fournisseur" prefWidth="150"/>
+                    <TableColumn fx:id="colNbArticles" text="Articles" prefWidth="70"/>
+                    <TableColumn fx:id="colStatut" text="Statut" prefWidth="100"/>
+                </columns>
+                <placeholder>
+                    <Label text="Aucune commande"/>
+                </placeholder>
+            </TableView>
+        </VBox>
+
+        <!-- Detail de la commande -->
+        <VBox spacing="10" styleClass="panel">
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Label fx:id="lblDetailTitle" text="Detail de la commande" styleClass="panel-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button fx:id="btnReceive" text="Recevoir" onAction="#handleReceiveOrder"
+                        styleClass="action-button, success" disable="true">
+                    <graphic><FontIcon iconLiteral="fas-check"/></graphic>
+                </Button>
+                <Button fx:id="btnCancel" text="Annuler" onAction="#handleCancelOrder"
+                        styleClass="danger-button" disable="true">
+                    <graphic><FontIcon iconLiteral="fas-times"/></graphic>
+                </Button>
+            </HBox>
+
+            <TableView fx:id="tableLignes" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="colLigneMed" text="Medicament" prefWidth="200"/>
+                    <TableColumn fx:id="colLigneQte" text="Qte Cmd" prefWidth="80"/>
+                    <TableColumn fx:id="colLigneRecue" text="Qte Recue" prefWidth="80"/>
+                    <TableColumn fx:id="colLignePrix" text="Prix Unit." prefWidth="90"/>
+                    <TableColumn fx:id="colLigneTotal" text="Total" prefWidth="90"/>
+                </columns>
+                <placeholder>
+                    <Label text="Selectionnez une commande"/>
+                </placeholder>
+            </TableView>
+
+            <!-- Notes -->
+            <VBox spacing="5">
+                <Label text="Notes:" styleClass="form-label"/>
+                <TextArea fx:id="txtNotes" prefRowCount="2" editable="false" wrapText="true"/>
+            </VBox>
+        </VBox>
+    </SplitPane>
+
+    <!-- Dialog nouvelle commande -->
+    <VBox fx:id="newOrderDialog" visible="false" managed="false" styleClass="dialog-overlay">
+        <VBox styleClass="dialog-content" spacing="15" maxWidth="600" maxHeight="500">
+            <Label text="Nouvelle Commande" styleClass="dialog-title"/>
+
+            <HBox spacing="10">
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label text="Fournisseur *" styleClass="form-label"/>
+                    <ComboBox fx:id="comboFournisseur" maxWidth="Infinity" promptText="Selectionner..."/>
+                </VBox>
+            </HBox>
+
+            <Separator/>
+
+            <!-- Ajout de lignes -->
+            <Label text="Ajouter des medicaments" styleClass="form-label"/>
+            <HBox spacing="10">
+                <ComboBox fx:id="comboMedicament" HBox.hgrow="ALWAYS" promptText="Medicament..."/>
+                <Spinner fx:id="spinnerQteCmd" min="1" max="9999" initialValue="10" prefWidth="100"/>
+                <TextField fx:id="txtPrixCmd" promptText="Prix" prefWidth="80"/>
+                <Button text="+" onAction="#handleAddLine" styleClass="action-button-small, primary"/>
+            </HBox>
+
+            <!-- Lignes de la nouvelle commande -->
+            <TableView fx:id="tableNewLines" prefHeight="150">
+                <columns>
+                    <TableColumn fx:id="colNewMed" text="Medicament" prefWidth="200"/>
+                    <TableColumn fx:id="colNewQte" text="Quantite" prefWidth="80"/>
+                    <TableColumn fx:id="colNewPrix" text="Prix Unit." prefWidth="80"/>
+                    <TableColumn fx:id="colNewAction" text="" prefWidth="40"/>
+                </columns>
+                <placeholder>
+                    <Label text="Ajoutez des medicaments"/>
+                </placeholder>
+            </TableView>
+
+            <VBox spacing="5">
+                <Label text="Notes (optionnel)" styleClass="form-label"/>
+                <TextArea fx:id="txtNewNotes" prefRowCount="2" wrapText="true"/>
+            </VBox>
+
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Button text="Annuler" onAction="#handleCancelNewOrder" styleClass="secondary-button"/>
+                <Button text="Creer la commande" onAction="#handleConfirmNewOrder" styleClass="action-button, success">
+                    <graphic><FontIcon iconLiteral="fas-check"/></graphic>
+                </Button>
+            </HBox>
+        </VBox>
+    </VBox>
+
+</VBox>

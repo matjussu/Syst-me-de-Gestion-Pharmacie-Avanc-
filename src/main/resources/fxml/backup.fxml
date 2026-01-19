@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.sgpa.controller.BackupController"
+      spacing="20" styleClass="backup-root">
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <!-- Actions de sauvegarde -->
+    <VBox spacing="15" styleClass="panel">
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <FontIcon iconLiteral="fas-database" iconSize="20" styleClass="section-icon"/>
+            <Label text="Sauvegarde de la Base de Donnees" styleClass="panel-title"/>
+        </HBox>
+
+        <Label fx:id="lblBackupDir" text="Repertoire de sauvegarde: " styleClass="info-text"/>
+
+        <HBox spacing="15" alignment="CENTER_LEFT">
+            <Button text="Nouvelle Sauvegarde" onAction="#handleBackup" styleClass="action-button, primary">
+                <graphic><FontIcon iconLiteral="fas-save"/></graphic>
+            </Button>
+            <CheckBox fx:id="chkCompress" text="Compresser (gzip)" selected="true"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <ProgressIndicator fx:id="progressIndicator" visible="false" prefWidth="25" prefHeight="25"/>
+            <Label fx:id="lblStatus" text="" styleClass="status-label"/>
+        </HBox>
+    </VBox>
+
+    <!-- Liste des sauvegardes -->
+    <VBox spacing="10" styleClass="panel" VBox.vgrow="ALWAYS">
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <FontIcon iconLiteral="fas-history" iconSize="20" styleClass="section-icon"/>
+            <Label text="Sauvegardes Disponibles" styleClass="panel-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="lblCount" text="0 sauvegardes" styleClass="info-text"/>
+            <Button onAction="#handleRefresh" styleClass="icon-button">
+                <graphic><FontIcon iconLiteral="fas-sync-alt"/></graphic>
+            </Button>
+        </HBox>
+
+        <TableView fx:id="tableBackups" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="colFileName" text="Fichier" prefWidth="300"/>
+                <TableColumn fx:id="colDate" text="Date" prefWidth="180"/>
+                <TableColumn fx:id="colSize" text="Taille" prefWidth="100"/>
+                <TableColumn fx:id="colActions" text="Actions" prefWidth="200"/>
+            </columns>
+            <placeholder>
+                <Label text="Aucune sauvegarde disponible"/>
+            </placeholder>
+        </TableView>
+    </VBox>
+
+    <!-- Section restauration -->
+    <VBox spacing="10" styleClass="panel, warning-panel">
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <FontIcon iconLiteral="fas-exclamation-triangle" iconSize="20" styleClass="warning-icon"/>
+            <Label text="Restauration" styleClass="panel-title"/>
+        </HBox>
+
+        <Label text="Attention: La restauration ecrasera toutes les donnees actuelles de la base de donnees."
+               styleClass="warning-text" wrapText="true"/>
+
+        <HBox spacing="15" alignment="CENTER_LEFT">
+            <Label text="Pour restaurer, selectionnez une sauvegarde dans la liste ci-dessus et cliquez sur 'Restaurer'."
+                   styleClass="info-text" wrapText="true"/>
+        </HBox>
+    </VBox>
+
+</VBox>

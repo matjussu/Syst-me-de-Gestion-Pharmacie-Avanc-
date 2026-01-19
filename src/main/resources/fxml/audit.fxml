@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.sgpa.controller.AuditController"
+      spacing="15" styleClass="audit-root">
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <!-- En-tete avec filtres -->
+    <VBox spacing="10" styleClass="panel">
+        <Label text="Filtres de recherche" styleClass="panel-title"/>
+
+        <HBox spacing="15" alignment="CENTER_LEFT">
+            <!-- Filtre par date -->
+            <VBox spacing="5">
+                <Label text="Date debut" styleClass="form-label"/>
+                <DatePicker fx:id="dateDebut" prefWidth="140"/>
+            </VBox>
+            <VBox spacing="5">
+                <Label text="Date fin" styleClass="form-label"/>
+                <DatePicker fx:id="dateFin" prefWidth="140"/>
+            </VBox>
+
+            <!-- Filtre par type d'action -->
+            <VBox spacing="5">
+                <Label text="Type d'action" styleClass="form-label"/>
+                <ComboBox fx:id="comboTypeAction" prefWidth="150" promptText="Tous"/>
+            </VBox>
+
+            <!-- Filtre par entite -->
+            <VBox spacing="5">
+                <Label text="Entite" styleClass="form-label"/>
+                <ComboBox fx:id="comboEntite" prefWidth="150" promptText="Toutes"/>
+            </VBox>
+
+            <!-- Filtre par utilisateur -->
+            <VBox spacing="5">
+                <Label text="Utilisateur" styleClass="form-label"/>
+                <ComboBox fx:id="comboUtilisateur" prefWidth="180" promptText="Tous"/>
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <!-- Boutons d'action -->
+            <Button text="Rechercher" onAction="#handleSearch" styleClass="action-button, primary">
+                <graphic><FontIcon iconLiteral="fas-search"/></graphic>
+            </Button>
+            <Button text="Reinitialiser" onAction="#handleReset" styleClass="secondary-button">
+                <graphic><FontIcon iconLiteral="fas-undo"/></graphic>
+            </Button>
+        </HBox>
+    </VBox>
+
+    <!-- Table des logs -->
+    <VBox spacing="10" styleClass="panel" VBox.vgrow="ALWAYS">
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <Label text="Journal d'Audit" styleClass="panel-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="lblCount" text="0 entrees" styleClass="info-text"/>
+            <Button onAction="#handleRefresh" styleClass="icon-button">
+                <graphic><FontIcon iconLiteral="fas-sync-alt"/></graphic>
+            </Button>
+            <Button text="Exporter" onAction="#handleExport" styleClass="action-button">
+                <graphic><FontIcon iconLiteral="fas-file-export"/></graphic>
+            </Button>
+        </HBox>
+
+        <TableView fx:id="tableAudit" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="colDate" text="Date/Heure" prefWidth="150"/>
+                <TableColumn fx:id="colUtilisateur" text="Utilisateur" prefWidth="150"/>
+                <TableColumn fx:id="colTypeAction" text="Action" prefWidth="120"/>
+                <TableColumn fx:id="colEntite" text="Entite" prefWidth="120"/>
+                <TableColumn fx:id="colDescription" text="Description" prefWidth="400"/>
+            </columns>
+            <placeholder>
+                <Label text="Aucune entree dans le journal"/>
+            </placeholder>
+        </TableView>
+
+        <!-- Pagination -->
+        <HBox spacing="10" alignment="CENTER">
+            <Button fx:id="btnPrevious" text="Precedent" onAction="#handlePrevious" styleClass="secondary-button">
+                <graphic><FontIcon iconLiteral="fas-chevron-left"/></graphic>
+            </Button>
+            <Label fx:id="lblPage" text="Page 1"/>
+            <Button fx:id="btnNext" text="Suivant" onAction="#handleNext" styleClass="secondary-button">
+                <graphic><FontIcon iconLiteral="fas-chevron-right"/></graphic>
+            </Button>
+        </HBox>
+    </VBox>
+
+</VBox>

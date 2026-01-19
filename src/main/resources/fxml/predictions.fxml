@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.chart.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.sgpa.controller.PredictionController"
+      spacing="20" styleClass="view-root">
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <!-- Barre d'outils -->
+    <HBox alignment="CENTER_LEFT" spacing="15" styleClass="toolbar">
+        <Label text="Periode d'analyse:" styleClass="toolbar-label"/>
+        <ComboBox fx:id="comboPeriode" promptText="90 jours" prefWidth="150"/>
+
+        <Region HBox.hgrow="ALWAYS"/>
+
+        <Button text="Actualiser" onAction="#handleRefresh" styleClass="action-button">
+            <graphic><FontIcon iconLiteral="fas-sync-alt"/></graphic>
+        </Button>
+        <Button fx:id="btnCreerCommande" text="Creer Commande" onAction="#handleCreerCommande"
+                styleClass="action-button, primary" disable="true">
+            <graphic><FontIcon iconLiteral="fas-shopping-cart"/></graphic>
+        </Button>
+        <Button text="Export PDF" onAction="#handleExportPDF" styleClass="action-button">
+            <graphic><FontIcon iconLiteral="fas-file-pdf"/></graphic>
+        </Button>
+    </HBox>
+
+    <!-- Statistiques resume -->
+    <HBox alignment="CENTER_LEFT" spacing="20" styleClass="stats-bar">
+        <HBox alignment="CENTER" spacing="5" styleClass="stat-badge">
+            <FontIcon iconLiteral="fas-boxes"/>
+            <Label fx:id="lblTotal" text="0 medicament(s)"/>
+        </HBox>
+        <HBox alignment="CENTER" spacing="5" styleClass="stat-badge, danger">
+            <FontIcon iconLiteral="fas-exclamation-circle"/>
+            <Label fx:id="lblRuptures" text="0 rupture(s)"/>
+        </HBox>
+        <HBox alignment="CENTER" spacing="5" styleClass="stat-badge, critical">
+            <FontIcon iconLiteral="fas-exclamation-triangle"/>
+            <Label fx:id="lblCritiques" text="0 critique(s)"/>
+        </HBox>
+        <HBox alignment="CENTER" spacing="5" styleClass="stat-badge, warning">
+            <FontIcon iconLiteral="fas-clock"/>
+            <Label fx:id="lblUrgents" text="0 urgent(s)"/>
+        </HBox>
+    </HBox>
+
+    <!-- Contenu principal -->
+    <SplitPane dividerPositions="0.65" VBox.vgrow="ALWAYS">
+        <!-- Table des predictions -->
+        <VBox spacing="10" styleClass="panel">
+            <Label text="Predictions de Reapprovisionnement" styleClass="panel-title"/>
+            <TextField fx:id="txtRecherche" promptText="Rechercher un medicament..." styleClass="search-field">
+                <HBox.margin><Insets bottom="10"/></HBox.margin>
+            </TextField>
+            <TableView fx:id="tablePredictions" VBox.vgrow="ALWAYS" styleClass="data-table">
+                <columns>
+                    <TableColumn fx:id="colMedicament" text="Medicament" prefWidth="180"/>
+                    <TableColumn fx:id="colStockActuel" text="Stock" prefWidth="70"/>
+                    <TableColumn fx:id="colConsoJour" text="Conso/Jour" prefWidth="85"/>
+                    <TableColumn fx:id="colJoursRestants" text="Jours Restants" prefWidth="100"/>
+                    <TableColumn fx:id="colDateRupture" text="Date Rupture" prefWidth="100"/>
+                    <TableColumn fx:id="colQuantiteSuggeree" text="Qte Suggeree" prefWidth="95"/>
+                    <TableColumn fx:id="colUrgence" text="Urgence" prefWidth="90"/>
+                </columns>
+                <placeholder><Label text="Aucune prediction disponible"/></placeholder>
+            </TableView>
+        </VBox>
+
+        <!-- Detail et graphique -->
+        <VBox spacing="15" styleClass="panel">
+            <Label fx:id="lblDetailTitre" text="Detail du medicament" styleClass="panel-title"/>
+
+            <!-- Informations detaillees -->
+            <GridPane hgap="15" vgap="10" styleClass="detail-grid">
+                <Label text="Stock vendable:" GridPane.columnIndex="0" GridPane.rowIndex="0" styleClass="detail-label"/>
+                <Label fx:id="lblDetailStock" text="-" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+
+                <Label text="Consommation mensuelle:" GridPane.columnIndex="0" GridPane.rowIndex="1" styleClass="detail-label"/>
+                <Label fx:id="lblDetailConsoMois" text="-" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+
+                <Label text="Seuil minimum:" GridPane.columnIndex="0" GridPane.rowIndex="2" styleClass="detail-label"/>
+                <Label fx:id="lblDetailSeuil" text="-" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+
+                <Label text="Delai livraison:" GridPane.columnIndex="0" GridPane.rowIndex="3" styleClass="detail-label"/>
+                <Label fx:id="lblDetailDelai" text="-" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+            </GridPane>
+
+            <!-- Graphique de prevision -->
+            <Label text="Evolution prevue du stock" styleClass="chart-title"/>
+            <LineChart fx:id="chartPrevision" VBox.vgrow="ALWAYS" styleClass="prediction-chart"
+                       legendVisible="false" createSymbols="true">
+                <xAxis>
+                    <CategoryAxis fx:id="xAxis" label="Jours"/>
+                </xAxis>
+                <yAxis>
+                    <NumberAxis fx:id="yAxis" label="Stock" autoRanging="true"/>
+                </yAxis>
+            </LineChart>
+
+            <!-- Actions -->
+            <HBox alignment="CENTER_RIGHT" spacing="10">
+                <Button fx:id="btnCommanderDetail" text="Commander ce medicament"
+                        onAction="#handleCommanderMedicament" styleClass="action-button, primary" disable="true">
+                    <graphic><FontIcon iconLiteral="fas-cart-plus"/></graphic>
+                </Button>
+            </HBox>
+        </VBox>
+    </SplitPane>
+
+</VBox>

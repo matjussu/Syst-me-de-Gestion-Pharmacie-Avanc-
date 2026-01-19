@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.sgpa.controller.UtilisateurController"
+      spacing="15" styleClass="utilisateurs-root">
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <!-- En-tete avec recherche et bouton ajouter -->
+    <HBox spacing="15" alignment="CENTER_LEFT">
+        <TextField fx:id="searchField" promptText="Rechercher par nom..."
+                   prefWidth="300" onKeyReleased="#handleSearch"/>
+        <Button onAction="#handleSearch" styleClass="icon-button">
+            <graphic><FontIcon iconLiteral="fas-search"/></graphic>
+        </Button>
+        <ComboBox fx:id="comboFilterRole" promptText="Filtrer par role" prefWidth="150"
+                  onAction="#handleFilterRole"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Nouvel Utilisateur" onAction="#handleNew" styleClass="action-button, primary">
+            <graphic><FontIcon iconLiteral="fas-user-plus"/></graphic>
+        </Button>
+        <Button onAction="#handleRefresh" styleClass="icon-button">
+            <graphic><FontIcon iconLiteral="fas-sync-alt"/></graphic>
+        </Button>
+    </HBox>
+
+    <!-- Contenu principal: Table + Formulaire -->
+    <SplitPane dividerPositions="0.6" VBox.vgrow="ALWAYS">
+        <!-- Table des utilisateurs -->
+        <VBox spacing="10" styleClass="panel">
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Label text="Liste des Utilisateurs" styleClass="panel-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="lblCount" text="0 utilisateurs" styleClass="info-text"/>
+            </HBox>
+            <TableView fx:id="tableUtilisateurs" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="colNomUtilisateur" text="Identifiant" prefWidth="120"/>
+                    <TableColumn fx:id="colNomComplet" text="Nom Complet" prefWidth="180"/>
+                    <TableColumn fx:id="colRole" text="Role" prefWidth="120"/>
+                    <TableColumn fx:id="colActif" text="Statut" prefWidth="80"/>
+                    <TableColumn fx:id="colDateCreation" text="Date Creation" prefWidth="130"/>
+                    <TableColumn fx:id="colDerniereConnexion" text="Derniere Connexion" prefWidth="150"/>
+                </columns>
+                <placeholder>
+                    <Label text="Aucun utilisateur"/>
+                </placeholder>
+            </TableView>
+        </VBox>
+
+        <!-- Formulaire d'edition -->
+        <VBox fx:id="formPanel" spacing="15" styleClass="panel, form-panel">
+            <Label fx:id="lblFormTitle" text="Nouvel Utilisateur" styleClass="panel-title"/>
+
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="form-scroll">
+                <VBox spacing="15">
+                    <padding>
+                        <Insets top="5" right="10" bottom="5" left="5"/>
+                    </padding>
+
+                    <VBox spacing="5">
+                        <Label text="Nom d'utilisateur *" styleClass="form-label"/>
+                        <TextField fx:id="txtNomUtilisateur" promptText="Ex: jdupont"/>
+                    </VBox>
+
+                    <VBox spacing="5">
+                        <Label text="Nom Complet *" styleClass="form-label"/>
+                        <TextField fx:id="txtNomComplet" promptText="Ex: Jean Dupont"/>
+                    </VBox>
+
+                    <VBox spacing="5">
+                        <Label text="Role *" styleClass="form-label"/>
+                        <ComboBox fx:id="comboRole" maxWidth="Infinity" promptText="Selectionner un role"/>
+                    </VBox>
+
+                    <VBox fx:id="passwordBox" spacing="5">
+                        <Label fx:id="lblPassword" text="Mot de passe *" styleClass="form-label"/>
+                        <PasswordField fx:id="txtMotDePasse" promptText="Minimum 4 caracteres"/>
+                        <Label fx:id="lblPasswordHint" text="" styleClass="hint-text"/>
+                    </VBox>
+
+                    <VBox fx:id="confirmPasswordBox" spacing="5">
+                        <Label text="Confirmer le mot de passe *" styleClass="form-label"/>
+                        <PasswordField fx:id="txtConfirmMotDePasse" promptText="Retapez le mot de passe"/>
+                    </VBox>
+
+                    <CheckBox fx:id="chkActif" text="Compte actif" selected="true"/>
+
+                    <!-- Section changement de mot de passe (visible en mode edition) -->
+                    <VBox fx:id="changePasswordSection" spacing="10" visible="false" managed="false">
+                        <Separator/>
+                        <CheckBox fx:id="chkChangePassword" text="Modifier le mot de passe"
+                                  onAction="#handleToggleChangePassword"/>
+                        <VBox fx:id="newPasswordBox" spacing="5" visible="false" managed="false">
+                            <Label text="Nouveau mot de passe" styleClass="form-label"/>
+                            <PasswordField fx:id="txtNewPassword" promptText="Nouveau mot de passe"/>
+                            <Label text="Confirmer le nouveau mot de passe" styleClass="form-label"/>
+                            <PasswordField fx:id="txtConfirmNewPassword" promptText="Confirmation"/>
+                        </VBox>
+                    </VBox>
+                </VBox>
+            </ScrollPane>
+
+            <Separator/>
+
+            <!-- Boutons d'action -->
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Button fx:id="btnDelete" text="Supprimer" onAction="#handleDelete"
+                        styleClass="danger-button" visible="false" managed="false">
+                    <graphic><FontIcon iconLiteral="fas-trash"/></graphic>
+                </Button>
+                <Button fx:id="btnToggleActive" text="Desactiver" onAction="#handleToggleActive"
+                        styleClass="warning-button" visible="false" managed="false">
+                    <graphic><FontIcon iconLiteral="fas-user-slash"/></graphic>
+                </Button>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Annuler" onAction="#handleCancel" styleClass="secondary-button"/>
+                <Button fx:id="btnSave" text="Enregistrer" onAction="#handleSave" styleClass="action-button, success">
+                    <graphic><FontIcon iconLiteral="fas-save"/></graphic>
+                </Button>
+            </HBox>
+        </VBox>
+    </SplitPane>
+
+</VBox>

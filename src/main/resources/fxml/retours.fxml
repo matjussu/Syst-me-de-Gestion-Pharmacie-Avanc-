@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.sgpa.controller.RetourController"
+      spacing="20" styleClass="view-root">
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <!-- Section Nouveau Retour -->
+    <VBox styleClass="panel" spacing="15">
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <FontIcon iconLiteral="fas-undo-alt" styleClass="panel-icon"/>
+            <Label text="Enregistrer un Retour" styleClass="panel-title"/>
+        </HBox>
+
+        <!-- Recherche de vente -->
+        <HBox spacing="15" alignment="CENTER_LEFT">
+            <Label text="N Vente:" styleClass="form-label" prefWidth="100"/>
+            <TextField fx:id="txtNumeroVente" promptText="Numero de la vente" prefWidth="150"/>
+            <Button text="Rechercher" onAction="#handleRechercherVente" styleClass="action-button, primary">
+                <graphic><FontIcon iconLiteral="fas-search"/></graphic>
+            </Button>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="lblInfoVente" text="" styleClass="info-text"/>
+        </HBox>
+
+        <!-- Details de la vente trouvee -->
+        <VBox fx:id="paneVenteDetails" visible="false" managed="false" spacing="10" styleClass="details-section">
+            <Separator/>
+            <Label text="Articles de la vente:" styleClass="sub-title"/>
+            <TableView fx:id="tableLignesVente" maxHeight="150" styleClass="data-table">
+                <columns>
+                    <TableColumn fx:id="colMedicament" text="Medicament" prefWidth="200"/>
+                    <TableColumn fx:id="colLot" text="N Lot" prefWidth="120"/>
+                    <TableColumn fx:id="colQuantiteVendue" text="Qte Vendue" prefWidth="90"/>
+                    <TableColumn fx:id="colQuantiteRetournee" text="Deja Retourne" prefWidth="100"/>
+                    <TableColumn fx:id="colQuantiteRestante" text="Retournable" prefWidth="90"/>
+                </columns>
+                <placeholder>
+                    <Label text="Selectionnez une ligne pour effectuer un retour"/>
+                </placeholder>
+            </TableView>
+
+            <!-- Formulaire de retour -->
+            <VBox fx:id="paneFormulaire" visible="false" managed="false" spacing="10">
+                <Separator/>
+                <HBox spacing="15" alignment="CENTER_LEFT">
+                    <VBox spacing="5">
+                        <Label text="Article selectionne:" styleClass="form-label"/>
+                        <Label fx:id="lblArticleSelectionne" text="-" styleClass="selected-item"/>
+                    </VBox>
+                    <VBox spacing="5">
+                        <Label text="Quantite a retourner:" styleClass="form-label"/>
+                        <Spinner fx:id="spinnerQuantite" prefWidth="100" min="1" max="999" initialValue="1"/>
+                    </VBox>
+                    <VBox spacing="5" HBox.hgrow="ALWAYS">
+                        <Label text="Motif du retour:" styleClass="form-label"/>
+                        <ComboBox fx:id="comboMotif" prefWidth="250" promptText="Selectionnez un motif"/>
+                    </VBox>
+                </HBox>
+                <HBox spacing="15" alignment="CENTER_LEFT">
+                    <VBox spacing="5" HBox.hgrow="ALWAYS">
+                        <Label text="Commentaire (optionnel):" styleClass="form-label"/>
+                        <TextField fx:id="txtCommentaire" promptText="Commentaire supplementaire"/>
+                    </VBox>
+                    <VBox spacing="5" alignment="CENTER_LEFT">
+                        <CheckBox fx:id="chkReintegrer" text="Reintegrer au stock" selected="true"/>
+                        <Label fx:id="lblReintegrerInfo" text="" styleClass="info-text-small"/>
+                    </VBox>
+                </HBox>
+                <HBox alignment="CENTER_RIGHT" spacing="10">
+                    <Button text="Annuler" onAction="#handleAnnuler" styleClass="action-button">
+                        <graphic><FontIcon iconLiteral="fas-times"/></graphic>
+                    </Button>
+                    <Button text="Enregistrer le retour" onAction="#handleEnregistrerRetour" styleClass="action-button, success">
+                        <graphic><FontIcon iconLiteral="fas-check"/></graphic>
+                    </Button>
+                </HBox>
+            </VBox>
+        </VBox>
+    </VBox>
+
+    <!-- Historique des retours -->
+    <VBox VBox.vgrow="ALWAYS" styleClass="panel" spacing="10">
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <FontIcon iconLiteral="fas-history" styleClass="panel-icon"/>
+            <Label text="Historique des Retours" styleClass="panel-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <!-- Filtres -->
+            <Label text="Du:" styleClass="filter-label"/>
+            <DatePicker fx:id="dateDebut" promptText="Date debut"/>
+            <Label text="Au:" styleClass="filter-label"/>
+            <DatePicker fx:id="dateFin" promptText="Date fin"/>
+            <Button text="Filtrer" onAction="#handleFiltrer" styleClass="action-button, primary">
+                <graphic><FontIcon iconLiteral="fas-filter"/></graphic>
+            </Button>
+            <Button text="Reinitialiser" onAction="#handleReinitialiser" styleClass="action-button">
+                <graphic><FontIcon iconLiteral="fas-sync"/></graphic>
+            </Button>
+        </HBox>
+
+        <!-- Filtres supplementaires -->
+        <HBox spacing="15" alignment="CENTER_LEFT">
+            <Label text="Filtre:" styleClass="filter-label"/>
+            <ComboBox fx:id="comboFiltreReintegre" promptText="Tous les retours" prefWidth="180"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="lblCount" text="0 retour(s)" styleClass="count-label"/>
+        </HBox>
+
+        <TableView fx:id="tableRetours" VBox.vgrow="ALWAYS" styleClass="data-table">
+            <columns>
+                <TableColumn fx:id="colRetourId" text="N" prefWidth="50"/>
+                <TableColumn fx:id="colRetourDate" text="Date/Heure" prefWidth="140"/>
+                <TableColumn fx:id="colRetourVente" text="Vente" prefWidth="70"/>
+                <TableColumn fx:id="colRetourMedicament" text="Medicament" prefWidth="180"/>
+                <TableColumn fx:id="colRetourLot" text="N Lot" prefWidth="100"/>
+                <TableColumn fx:id="colRetourQuantite" text="Qte" prefWidth="60"/>
+                <TableColumn fx:id="colRetourMotif" text="Motif" prefWidth="150"/>
+                <TableColumn fx:id="colRetourReintegre" text="Reintegre" prefWidth="80"/>
+                <TableColumn fx:id="colRetourUtilisateur" text="Par" prefWidth="120"/>
+            </columns>
+            <placeholder>
+                <Label text="Aucun retour enregistre"/>
+            </placeholder>
+        </TableView>
+    </VBox>
+
+</VBox>
