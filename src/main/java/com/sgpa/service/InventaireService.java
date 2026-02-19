@@ -422,6 +422,10 @@ public class InventaireService {
                     conn.setAutoCommit(true);
                 } catch (SQLException ignored) {
                 }
+                try {
+                    conn.close();
+                } catch (SQLException ignored) {
+                }
             }
         }
     }
@@ -496,7 +500,14 @@ public class InventaireService {
      */
     public List<Lot> getAllLotsForComptage() throws ServiceException {
         try {
-            return lotDAO.findAll();
+            List<Lot> allLots = lotDAO.findAll();
+            // Exclure les lots perimes a stock 0 (inutiles pour l'inventaire)
+            LocalDate today = LocalDate.now();
+            allLots.removeIf(lot ->
+                    lot.getQuantiteStock() == 0 &&
+                    lot.getDatePeremption() != null &&
+                    lot.getDatePeremption().isBefore(today));
+            return allLots;
         } catch (DAOException e) {
             throw new ServiceException("Erreur lors de la recuperation des lots", e);
         }

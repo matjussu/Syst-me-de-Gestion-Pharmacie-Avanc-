@@ -37,58 +37,72 @@
         <Label fx:id="lblTotal" text="Total: 0.00 EUR" styleClass="total-label"/>
     </HBox>
 
-    <!-- Table des ventes -->
-    <VBox VBox.vgrow="ALWAYS" styleClass="panel">
-        <HBox alignment="CENTER_LEFT" spacing="10">
-            <FontIcon iconLiteral="fas-history" styleClass="panel-icon"/>
-            <Label text="Historique des Ventes" styleClass="panel-title"/>
-            <Region HBox.hgrow="ALWAYS"/>
-            <Label fx:id="lblCount" text="0 vente(s)" styleClass="count-label"/>
-            <Button text="Exporter CSV" onAction="#handleExportCSV" styleClass="export-button">
-                <graphic><FontIcon iconLiteral="fas-file-csv"/></graphic>
-            </Button>
-        </HBox>
+    <!-- Contenu principal : tableau + detail lateral -->
+    <HBox fx:id="contentArea" spacing="16" VBox.vgrow="ALWAYS">
 
-        <TableView fx:id="tableVentes" VBox.vgrow="ALWAYS" styleClass="data-table">
-            <columns>
-                <TableColumn fx:id="colId" text="N°" prefWidth="60"/>
-                <TableColumn fx:id="colDate" text="Date/Heure" prefWidth="150"/>
-                <TableColumn fx:id="colVendeur" text="Vendeur" prefWidth="150"/>
-                <TableColumn fx:id="colNbArticles" text="Articles" prefWidth="80"/>
-                <TableColumn fx:id="colMontant" text="Montant" prefWidth="100"/>
-                <TableColumn fx:id="colOrdonnance" text="Ordonnance" prefWidth="100"/>
-            </columns>
-            <placeholder>
-                <Label text="Aucune vente trouvee"/>
-            </placeholder>
-        </TableView>
-    </VBox>
+        <!-- Table des ventes -->
+        <VBox HBox.hgrow="ALWAYS" styleClass="panel">
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <FontIcon iconLiteral="fas-history" styleClass="panel-icon"/>
+                <Label text="Historique des Ventes" styleClass="panel-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="lblCount" text="0 vente(s)" styleClass="count-label"/>
+                <HBox fx:id="exportGroup" styleClass="export-group">
+                    <Button text="PDF" onAction="#handleExportPDF" styleClass="export-pdf">
+                        <graphic><FontIcon iconLiteral="fas-file-pdf"/></graphic>
+                    </Button>
+                    <Button text="CSV" onAction="#handleExportCSV" styleClass="export-csv">
+                        <graphic><FontIcon iconLiteral="fas-file-csv"/></graphic>
+                    </Button>
+                    <Button text="Excel" onAction="#handleExportExcel" styleClass="export-excel">
+                        <graphic><FontIcon iconLiteral="fas-file-excel"/></graphic>
+                    </Button>
+                </HBox>
+            </HBox>
 
-    <!-- Detail de la vente selectionnee -->
-    <VBox fx:id="detailPane" styleClass="panel" visible="false" managed="false">
-        <HBox alignment="CENTER_LEFT" spacing="10">
-            <FontIcon iconLiteral="fas-receipt" styleClass="panel-icon"/>
-            <Label fx:id="lblDetailTitle" text="Detail de la vente N°" styleClass="panel-title"/>
-            <Region HBox.hgrow="ALWAYS"/>
-            <Button text="Fermer" onAction="#handleCloseDetail" styleClass="action-button, danger-button">
-                <graphic><FontIcon iconLiteral="fas-times"/></graphic>
-            </Button>
-        </HBox>
+            <TableView fx:id="tableVentes" VBox.vgrow="ALWAYS" styleClass="data-table">
+                <columns>
+                    <TableColumn fx:id="colId" text="N&#176;" prefWidth="60"/>
+                    <TableColumn fx:id="colDate" text="Date/Heure" prefWidth="150"/>
+                    <TableColumn fx:id="colVendeur" text="Vendeur" prefWidth="150"/>
+                    <TableColumn fx:id="colNbArticles" text="Articles" prefWidth="80"/>
+                    <TableColumn fx:id="colMontant" text="Montant" prefWidth="100"/>
+                    <TableColumn fx:id="colOrdonnance" text="Ordonnance" prefWidth="100"/>
+                </columns>
+                <placeholder>
+                    <Label text="Aucune vente trouvee"/>
+                </placeholder>
+            </TableView>
+        </VBox>
 
-        <TableView fx:id="tableDetail" maxHeight="200" styleClass="data-table">
-            <columns>
-                <TableColumn fx:id="colDetailMedicament" text="Medicament" prefWidth="200"/>
-                <TableColumn fx:id="colDetailLot" text="N° Lot" prefWidth="120"/>
-                <TableColumn fx:id="colDetailQuantite" text="Quantite" prefWidth="80"/>
-                <TableColumn fx:id="colDetailPrixUnit" text="Prix Unit." prefWidth="100"/>
-                <TableColumn fx:id="colDetailTotal" text="Total" prefWidth="100"/>
-            </columns>
-        </TableView>
+        <!-- Detail de la vente selectionnee (panneau lateral droit) -->
+        <VBox fx:id="detailPane" styleClass="panel, detail-side-panel" visible="false" managed="false"
+              prefWidth="400" minWidth="360" maxWidth="440">
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <FontIcon iconLiteral="fas-receipt" styleClass="panel-icon"/>
+                <Label fx:id="lblDetailTitle" text="Detail de la vente N&#176;" styleClass="panel-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Fermer" onAction="#handleCloseDetail" styleClass="action-button, danger-button">
+                    <graphic><FontIcon iconLiteral="fas-times"/></graphic>
+                </Button>
+            </HBox>
 
-        <HBox alignment="CENTER" spacing="5" styleClass="fefo-info">
-            <FontIcon iconLiteral="fas-info-circle" styleClass="info-icon"/>
-            <Label text="Les lots affiches correspondent a l'ordre FEFO (premiers expires, premiers sortis)" styleClass="info-text"/>
-        </HBox>
-    </VBox>
+            <TableView fx:id="tableDetail" VBox.vgrow="ALWAYS" styleClass="data-table">
+                <columns>
+                    <TableColumn fx:id="colDetailMedicament" text="Medicament" prefWidth="140"/>
+                    <TableColumn fx:id="colDetailLot" text="N&#176; Lot" prefWidth="90"/>
+                    <TableColumn fx:id="colDetailQuantite" text="Qte" prefWidth="50"/>
+                    <TableColumn fx:id="colDetailPrixUnit" text="Prix Unit." prefWidth="80"/>
+                    <TableColumn fx:id="colDetailTotal" text="Total" prefWidth="80"/>
+                </columns>
+            </TableView>
+
+            <HBox alignment="CENTER" spacing="5" styleClass="fefo-info">
+                <FontIcon iconLiteral="fas-info-circle" styleClass="info-icon"/>
+                <Label text="Lots affiches selon l'ordre FEFO" styleClass="info-text" wrapText="true"/>
+            </HBox>
+        </VBox>
+
+    </HBox>
 
 </VBox>

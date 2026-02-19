@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Controleur pour l'ecran de sauvegarde/restauration de la base de donnees.
@@ -47,6 +46,13 @@ public class BackupController extends BaseController {
 
     public BackupController() {
         this.backupService = new BackupService();
+    }
+
+    @Override
+    protected void onUserSet() {
+        if (currentUser == null || !currentUser.isAdmin()) {
+            logger.warn("Acces non autorise aux sauvegardes");
+        }
     }
 
     @FXML
@@ -129,106 +135,65 @@ public class BackupController extends BaseController {
             setLoading(false, "Sauvegarde terminee!");
             String filePath = backupTask.getValue();
             loadBackups();
-
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Sauvegarde reussie");
-            alert.setHeaderText("La base de donnees a ete sauvegardee");
-            alert.setContentText("Fichier: " + filePath);
-            alert.showAndWait();
+            showSuccess("Sauvegarde reussie", "La base de donnees a ete sauvegardee.\nFichier: " + filePath);
         });
 
         backupTask.setOnFailed(event -> {
             setLoading(false, "Erreur!");
             logger.error("Erreur de sauvegarde", backupTask.getException());
-
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Erreur");
-            alert.setHeaderText("Echec de la sauvegarde");
-            alert.setContentText(backupTask.getException().getMessage());
-            alert.showAndWait();
+            showError("Echec de la sauvegarde", backupTask.getException().getMessage());
         });
 
         runAsync(backupTask);
     }
 
     private void handleRestore(BackupFile backup) {
-        // Confirmation
-        Alert confirm = new Alert(Alert.AlertType.WARNING);
-        confirm.setTitle("Confirmer la restauration");
-        confirm.setHeaderText("Restaurer la base de donnees?");
-        confirm.setContentText(
+        showDangerConfirmation("Restaurer la base de donnees?",
                 "ATTENTION: Cette action va ecraser toutes les donnees actuelles!\n\n" +
                         "Fichier: " + backup.getFileName() + "\n" +
                         "Date: " + backup.getModifiedTime().atZone(ZoneId.systemDefault()).format(DATE_FORMAT) + "\n\n" +
-                        "Voulez-vous continuer?"
-        );
+                        "Voulez-vous continuer?",
+                "Restaurer", "Annuler",
+                () -> {
+                    setLoading(true, "Restauration en cours...");
 
-        ButtonType btnConfirm = new ButtonType("Restaurer", ButtonBar.ButtonData.OK_DONE);
-        ButtonType btnCancel = new ButtonType("Annuler", ButtonBar.ButtonData.CANCEL_CLOSE);
-        confirm.getButtonTypes().setAll(btnConfirm, btnCancel);
+                    Task<Void> restoreTask = new Task<>() {
+                        @Override
+                        protected Void call() throws Exception {
+                            backupService.restore(backup.getPath());
+                            return null;
+                        }
+                    };
 
-        Optional<ButtonType> result = confirm.showAndWait();
-        if (result.isEmpty() || result.get() != btnConfirm) {
-            return;
-        }
+                    restoreTask.setOnSucceeded(event -> {
+                        setLoading(false, "Restauration terminee!");
+                        showSuccess("Restauration reussie",
+                                "La base de donnees a ete restauree.\nVeuillez redemarrer l'application pour appliquer les changements.");
+                    });
 
-        setLoading(true, "Restauration en cours...");
+                    restoreTask.setOnFailed(event -> {
+                        setLoading(false, "Erreur!");
+                        logger.error("Erreur de restauration", restoreTask.getException());
+                        showError("Echec de la restauration", restoreTask.getException().getMessage());
+                    });
 
-        Task<Void> restoreTask = new Task<>() {
-            @Override
-            protected Void call() throws Exception {
-                backupService.restore(backup.getPath());
-                return null;
-            }
-        };
-
-        restoreTask.setOnSucceeded(event -> {
-            setLoading(false, "Restauration terminee!");
-
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Restauration reussie");
-            alert.setHeaderText("La base de donnees a ete restauree");
-            alert.setContentText("Veuillez redemarrer l'application pour appliquer les changements.");
-            alert.showAndWait();
-        });
-
-        restoreTask.setOnFailed(event -> {
-            setLoading(false, "Erreur!");
-            logger.error("Erreur de restauration", restoreTask.getException());
-
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Erreur");
-            alert.setHeaderText("Echec de la restauration");
-            alert.setContentText(restoreTask.getException().getMessage());
-            alert.showAndWait();
-        });
-
-        runAsync(restoreTask);
+                    runAsync(restoreTask);
+                }, null);
     }
 
     private void handleDelete(BackupFile backup) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Confirmer la suppression");
-        confirm.setHeaderText("Supprimer cette sauvegarde?");
-        confirm.setContentText("Fichier: " + backup.getFileName());
-
-        Optional<ButtonType> result = confirm.showAndWait();
-        if (result.isEmpty() || result.get() != ButtonType.OK) {
-            return;
-        }
-
-        try {
-            backupService.deleteBackup(backup.getPath());
-            loadBackups();
-            lblStatus.setText("Sauvegarde supprimee");
-        } catch (Exception e) {
-            logger.error("Erreur suppression backup", e);
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Erreur");
-            alert.setHeaderText("Impossible de supprimer");
-            alert.setContentText(e.getMessage());
-            alert.showAndWait();
-        }
+        showDangerConfirmation("Supprimer cette sauvegarde?",
+                "Fichier: " + backup.getFileName(),
+                () -> {
+                    try {
+                        backupService.deleteBackup(backup.getPath());
+                        loadBackups();
+                        lblStatus.setText("Sauvegarde supprimee");
+                    } catch (Exception e) {
+                        logger.error("Erreur suppression backup", e);
+                        showError("Impossible de supprimer", e.getMessage());
+                    }
+                });
     }
 
     @FXML

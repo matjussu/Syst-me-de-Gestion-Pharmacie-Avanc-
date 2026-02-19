@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS fournisseurs (
     email VARCHAR(100),
     actif BOOLEAN DEFAULT TRUE,
     date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_fournisseur_nom (nom),
+    UNIQUE KEY idx_fournisseur_nom (nom),
     INDEX idx_fournisseur_actif (actif)
 ) ENGINE=InnoDB;
 
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS medicaments (
     actif BOOLEAN DEFAULT TRUE,
     date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
     date_modification DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_medicament_nom (nom_commercial),
+    UNIQUE INDEX idx_medicament_nom (nom_commercial),
     INDEX idx_medicament_principe (principe_actif),
     INDEX idx_medicament_ordonnance (necessite_ordonnance),
     INDEX idx_medicament_actif (actif)
@@ -237,7 +237,6 @@ CREATE TABLE IF NOT EXISTS comptages_inventaire (
     INDEX idx_comptage_session (id_session),
     INDEX idx_comptage_ecart (ecart)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 -- -----------------------------------------------------------------------------
 -- Table: regularisations
 -- -----------------------------------------------------------------------------

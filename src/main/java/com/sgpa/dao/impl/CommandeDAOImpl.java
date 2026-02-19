@@ -3,7 +3,9 @@ package com.sgpa.dao.impl;
 import com.sgpa.dao.CommandeDAO;
 import com.sgpa.exception.DAOException;
 import com.sgpa.model.Commande;
+import com.sgpa.model.Fournisseur;
 import com.sgpa.model.LigneCommande;
+import com.sgpa.model.Medicament;
 import com.sgpa.model.enums.StatutCommande;
 import com.sgpa.utils.DatabaseConnection;
 import org.slf4j.Logger;
@@ -25,10 +27,18 @@ public class CommandeDAOImpl implements CommandeDAO {
     private static final Logger logger = LoggerFactory.getLogger(CommandeDAOImpl.class);
 
     private static final String SQL_FIND_BY_ID =
-            "SELECT * FROM commandes WHERE id_commande = ?";
+            "SELECT c.*, f.nom AS fournisseur_nom, f.contact AS fournisseur_contact, " +
+            "f.telephone AS fournisseur_telephone, f.email AS fournisseur_email " +
+            "FROM commandes c LEFT JOIN fournisseurs f ON c.id_fournisseur = f.id_fournisseur " +
+            "WHERE c.id_commande = ?";
 
     private static final String SQL_FIND_ALL =
-            "SELECT * FROM commandes ORDER BY date_creation DESC";
+            "SELECT c.*, f.nom AS fournisseur_nom, f.contact AS fournisseur_contact, " +
+            "f.telephone AS fournisseur_telephone, f.email AS fournisseur_email, " +
+            "(SELECT COALESCE(SUM(lc.quantite_commandee), 0) FROM ligne_commandes lc " +
+            "WHERE lc.id_commande = c.id_commande) AS nb_articles_total " +
+            "FROM commandes c LEFT JOIN fournisseurs f ON c.id_fournisseur = f.id_fournisseur " +
+            "ORDER BY c.date_creation DESC";
 
     private static final String SQL_INSERT =
             "INSERT INTO commandes (date_creation, date_reception, statut, id_fournisseur, notes) " +
@@ -51,16 +61,26 @@ public class CommandeDAOImpl implements CommandeDAO {
             "VALUES (?, ?, ?, ?, ?)";
 
     private static final String SQL_FIND_LIGNES =
-            "SELECT * FROM ligne_commandes WHERE id_commande = ?";
+            "SELECT lc.*, m.nom_commercial AS medicament_nom " +
+            "FROM ligne_commandes lc LEFT JOIN medicaments m ON lc.id_medicament = m.id_medicament " +
+            "WHERE lc.id_commande = ?";
 
     private static final String SQL_FIND_BY_STATUT =
-            "SELECT * FROM commandes WHERE statut = ? ORDER BY date_creation DESC";
+            "SELECT c.*, f.nom AS fournisseur_nom, f.contact AS fournisseur_contact, " +
+            "f.telephone AS fournisseur_telephone, f.email AS fournisseur_email " +
+            "FROM commandes c LEFT JOIN fournisseurs f ON c.id_fournisseur = f.id_fournisseur " +
+            "WHERE c.statut = ? ORDER BY c.date_creation DESC";
 
     private static final String SQL_FIND_BY_FOURNISSEUR =
-            "SELECT * FROM commandes WHERE id_fournisseur = ? ORDER BY date_creation DESC";
+            "SELECT c.*, f.nom AS fournisseur_nom, f.contact AS fournisseur_contact, " +
+            "f.telephone AS fournisseur_telephone, f.email AS fournisseur_email " +
+            "FROM commandes c LEFT JOIN fournisseurs f ON c.id_fournisseur = f.id_fournisseur " +
+            "WHERE c.id_fournisseur = ? ORDER BY c.date_creation DESC";
 
     private static final String SQL_FIND_BY_MEDICAMENT =
-            "SELECT DISTINCT c.* FROM commandes c " +
+            "SELECT DISTINCT c.*, f.nom AS fournisseur_nom, f.contact AS fournisseur_contact, " +
+            "f.telephone AS fournisseur_telephone, f.email AS fournisseur_email " +
+            "FROM commandes c LEFT JOIN fournisseurs f ON c.id_fournisseur = f.id_fournisseur " +
             "INNER JOIN ligne_commandes lc ON c.id_commande = lc.id_commande " +
             "WHERE lc.id_medicament = ? ORDER BY c.date_creation DESC";
 
@@ -339,6 +359,29 @@ public class CommandeDAOImpl implements CommandeDAO {
         commande.setIdFournisseur(rs.getInt("id_fournisseur"));
         commande.setNotes(rs.getString("notes"));
 
+        // Charger le fournisseur depuis le JOIN
+        try {
+            String fournisseurNom = rs.getString("fournisseur_nom");
+            if (fournisseurNom != null) {
+                Fournisseur fournisseur = new Fournisseur();
+                fournisseur.setIdFournisseur(rs.getInt("id_fournisseur"));
+                fournisseur.setNom(fournisseurNom);
+                fournisseur.setContact(rs.getString("fournisseur_contact"));
+                fournisseur.setTelephone(rs.getString("fournisseur_telephone"));
+                fournisseur.setEmail(rs.getString("fournisseur_email"));
+                commande.setFournisseur(fournisseur);
+            }
+        } catch (SQLException ignored) {
+            // Colonne non presente si requete sans JOIN
+        }
+
+        // Charger le nombre d'articles pre-calcule (sous-requete)
+        try {
+            commande.setNbArticlesTotal(rs.getInt("nb_articles_total"));
+        } catch (SQLException ignored) {
+            // Colonne non presente si requete sans sous-requete
+        }
+
         return commande;
     }
 
@@ -350,6 +393,20 @@ public class CommandeDAOImpl implements CommandeDAO {
         ligne.setQuantiteCommandee(rs.getInt("quantite_commandee"));
         ligne.setQuantiteRecue(rs.getInt("quantite_recue"));
         ligne.setPrixUnitaire(rs.getBigDecimal("prix_unitaire"));
+
+        // Charger le medicament depuis le JOIN
+        try {
+            String medicamentNom = rs.getString("medicament_nom");
+            if (medicamentNom != null) {
+                Medicament medicament = new Medicament();
+                medicament.setIdMedicament(rs.getInt("id_medicament"));
+                medicament.setNomCommercial(medicamentNom);
+                ligne.setMedicament(medicament);
+            }
+        } catch (SQLException ignored) {
+            // Colonne non presente si requete sans JOIN
+        }
+
         return ligne;
     }
 }

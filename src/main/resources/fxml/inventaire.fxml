@@ -22,12 +22,32 @@
         </HBox>
 
         <!-- Pas de session en cours -->
-        <VBox fx:id="paneNoSession" spacing="10">
-            <Label text="Aucune session d'inventaire en cours." styleClass="info-text"/>
+        <VBox fx:id="paneNoSession" spacing="12">
+            <Label text="Comptez physiquement chaque lot en rayon, puis saisissez les quantites reelles. Le systeme calculera les differences et ajustera le stock automatiquement."
+                   styleClass="info-text" wrapText="true"/>
+
+            <!-- Mini-timeline des etapes -->
+            <HBox spacing="8" alignment="CENTER_LEFT" styleClass="inventaire-steps">
+                <HBox spacing="5" alignment="CENTER_LEFT" styleClass="step-item">
+                    <FontIcon iconLiteral="fas-play-circle" iconSize="14" styleClass="step-icon"/>
+                    <Label text="1. Demarrer" styleClass="step-label"/>
+                </HBox>
+                <FontIcon iconLiteral="fas-chevron-right" iconSize="10" styleClass="step-arrow"/>
+                <HBox spacing="5" alignment="CENTER_LEFT" styleClass="step-item">
+                    <FontIcon iconLiteral="fas-calculator" iconSize="14" styleClass="step-icon"/>
+                    <Label text="2. Compter les lots" styleClass="step-label"/>
+                </HBox>
+                <FontIcon iconLiteral="fas-chevron-right" iconSize="10" styleClass="step-arrow"/>
+                <HBox spacing="5" alignment="CENTER_LEFT" styleClass="step-item">
+                    <FontIcon iconLiteral="fas-check-circle" iconSize="14" styleClass="step-icon"/>
+                    <Label text="3. Valider" styleClass="step-label"/>
+                </HBox>
+            </HBox>
+
             <HBox spacing="15" alignment="CENTER_LEFT">
                 <VBox spacing="5" HBox.hgrow="ALWAYS">
                     <Label text="Notes (optionnel):" styleClass="form-label"/>
-                    <TextField fx:id="txtNotes" promptText="Description de l'inventaire"/>
+                    <TextField fx:id="txtNotes" promptText="Ex: Inventaire mensuel fevrier 2026"/>
                 </VBox>
                 <Button text="Demarrer un inventaire" onAction="#handleDemarrerSession" styleClass="action-button, success">
                     <graphic><FontIcon iconLiteral="fas-play"/></graphic>
@@ -47,33 +67,48 @@
                     <Label fx:id="lblSessionDebut" text="-" styleClass="value-text"/>
                 </VBox>
                 <VBox spacing="3">
-                    <Label text="Comptages:" styleClass="form-label"/>
-                    <Label fx:id="lblNbComptages" text="0" styleClass="value-text"/>
+                    <Label text="Duree:" styleClass="form-label"/>
+                    <Label fx:id="lblDureeSession" text="-" styleClass="value-text"/>
                 </VBox>
                 <VBox spacing="3">
-                    <Label text="Ecarts:" styleClass="form-label"/>
-                    <Label fx:id="lblNbEcarts" text="0" styleClass="value-text, warning-text"/>
+                    <Label text="Progression:" styleClass="form-label"/>
+                    <Label fx:id="lblNbComptages" text="0 / 0 lots" styleClass="value-text"/>
+                </VBox>
+                <VBox spacing="3">
+                    <Label text="Differences:" styleClass="form-label"/>
+                    <Label fx:id="lblNbEcarts" text="0" styleClass="value-text"/>
                 </VBox>
                 <Region HBox.hgrow="ALWAYS"/>
                 <Button text="Annuler" onAction="#handleAnnulerSession" styleClass="action-button, danger">
                     <graphic><FontIcon iconLiteral="fas-times"/></graphic>
                 </Button>
-                <Button text="Terminer et Regulariser" onAction="#handleTerminerSession" styleClass="action-button, success">
+                <Button text="Valider l'inventaire" onAction="#handleTerminerSession" styleClass="action-button, success">
                     <graphic><FontIcon iconLiteral="fas-check"/></graphic>
                 </Button>
             </HBox>
+
+            <!-- Barre de progression -->
+            <ProgressBar fx:id="progressBar" maxWidth="Infinity" prefHeight="6" styleClass="inventaire-progress"/>
         </VBox>
     </VBox>
 
     <!-- Zone de comptage -->
     <HBox spacing="20" VBox.vgrow="ALWAYS">
-        <!-- Liste des lots a compter -->
+        <!-- Liste des lots -->
         <VBox styleClass="panel" spacing="10" HBox.hgrow="ALWAYS">
             <HBox alignment="CENTER_LEFT" spacing="10">
                 <FontIcon iconLiteral="fas-boxes" styleClass="panel-icon"/>
-                <Label text="Lots a compter" styleClass="panel-title"/>
+                <Label text="Lots en stock" styleClass="panel-title"/>
                 <Region HBox.hgrow="ALWAYS"/>
-                <TextField fx:id="txtRecherche" promptText="Rechercher..." prefWidth="200"/>
+                <TextField fx:id="txtRecherche" promptText="Rechercher un medicament ou lot..." prefWidth="220"/>
+            </HBox>
+
+            <!-- Filtres par statut -->
+            <HBox fx:id="hboxFiltres" spacing="8" alignment="CENTER_LEFT">
+                <ToggleButton fx:id="btnFiltreTous" text="Tous" styleClass="filter-toggle" selected="true"/>
+                <ToggleButton fx:id="btnFiltreACompter" text="A compter" styleClass="filter-toggle"/>
+                <ToggleButton fx:id="btnFiltreComptes" text="Comptes" styleClass="filter-toggle"/>
+                <ToggleButton fx:id="btnFiltreEcarts" text="Avec difference" styleClass="filter-toggle"/>
             </HBox>
 
             <TableView fx:id="tableLots" VBox.vgrow="ALWAYS" styleClass="data-table">
@@ -81,10 +116,10 @@
                     <TableColumn fx:id="colMedicament" text="Medicament" prefWidth="200"/>
                     <TableColumn fx:id="colLot" text="N Lot" prefWidth="100"/>
                     <TableColumn fx:id="colPeremption" text="Peremption" prefWidth="100"/>
-                    <TableColumn fx:id="colStockTheorique" text="Stock Theo." prefWidth="90"/>
-                    <TableColumn fx:id="colStockPhysique" text="Stock Phys." prefWidth="90"/>
-                    <TableColumn fx:id="colEcart" text="Ecart" prefWidth="70"/>
-                    <TableColumn fx:id="colStatut" text="Statut" prefWidth="80"/>
+                    <TableColumn fx:id="colStockTheorique" text="Stock systeme" prefWidth="95"/>
+                    <TableColumn fx:id="colStockPhysique" text="Stock compte" prefWidth="95"/>
+                    <TableColumn fx:id="colEcart" text="Difference" prefWidth="80"/>
+                    <TableColumn fx:id="colStatut" text="Statut" prefWidth="100"/>
                 </columns>
                 <placeholder>
                     <Label text="Aucun lot disponible"/>
@@ -92,91 +127,116 @@
             </TableView>
         </VBox>
 
+        <!-- Panel placeholder quand aucun lot selectionne -->
+        <VBox fx:id="panePlaceholder" styleClass="panel" spacing="15" prefWidth="350" alignment="CENTER">
+            <FontIcon iconLiteral="fas-hand-pointer" iconSize="36" styleClass="placeholder-icon"/>
+            <Label text="Selectionnez un lot" styleClass="panel-title" style="-fx-text-fill: #94a3b8;"/>
+            <Label text="Cliquez sur un lot dans le tableau pour saisir le comptage physique."
+                   styleClass="info-text" wrapText="true" textAlignment="CENTER" alignment="CENTER"/>
+        </VBox>
+
         <!-- Formulaire de comptage -->
-        <VBox fx:id="paneComptage" styleClass="panel" spacing="15" prefWidth="350" visible="false" managed="false">
+        <VBox fx:id="paneComptage" styleClass="panel" spacing="10" prefWidth="350" visible="false" managed="false">
             <HBox alignment="CENTER_LEFT" spacing="10">
                 <FontIcon iconLiteral="fas-edit" styleClass="panel-icon"/>
                 <Label text="Saisie Comptage" styleClass="panel-title"/>
             </HBox>
 
-            <VBox spacing="5">
-                <Label text="Medicament:" styleClass="form-label"/>
-                <Label fx:id="lblMedicament" text="-" styleClass="value-text"/>
-            </VBox>
+            <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="comptage-scroll" VBox.vgrow="ALWAYS">
+                <VBox spacing="15" styleClass="comptage-scroll-content">
+                    <VBox spacing="5">
+                        <Label text="Medicament:" styleClass="form-label"/>
+                        <Label fx:id="lblMedicament" text="-" styleClass="value-text"/>
+                    </VBox>
 
-            <VBox spacing="5">
-                <Label text="Numero de lot:" styleClass="form-label"/>
-                <Label fx:id="lblNumeroLot" text="-" styleClass="value-text"/>
-            </VBox>
+                    <VBox spacing="5">
+                        <Label text="Numero de lot:" styleClass="form-label"/>
+                        <Label fx:id="lblNumeroLot" text="-" styleClass="value-text"/>
+                    </VBox>
 
-            <VBox spacing="5">
-                <Label text="Date de peremption:" styleClass="form-label"/>
-                <Label fx:id="lblPeremption" text="-" styleClass="value-text"/>
-            </VBox>
+                    <VBox spacing="5">
+                        <Label text="Date de peremption:" styleClass="form-label"/>
+                        <Label fx:id="lblPeremption" text="-" styleClass="value-text"/>
+                    </VBox>
 
-            <Separator/>
+                    <Separator/>
 
-            <VBox spacing="5">
-                <Label text="Quantite theorique (systeme):" styleClass="form-label"/>
-                <Label fx:id="lblQteTheorique" text="0" styleClass="value-text-large"/>
-            </VBox>
+                    <VBox spacing="5">
+                        <Label text="Quantite en systeme:" styleClass="form-label"/>
+                        <Label fx:id="lblQteTheorique" text="0" styleClass="value-text-large"/>
+                    </VBox>
 
-            <VBox spacing="5">
-                <Label text="Quantite physique (comptee):" styleClass="form-label"/>
-                <Spinner fx:id="spinnerQtePhysique" prefWidth="150" editable="true"/>
-            </VBox>
+                    <VBox spacing="5">
+                        <Label text="Quantite comptee:" styleClass="form-label"/>
+                        <Spinner fx:id="spinnerQtePhysique" prefWidth="150" editable="true"/>
+                    </VBox>
 
-            <VBox spacing="5">
-                <Label text="Ecart calcule:" styleClass="form-label"/>
-                <Label fx:id="lblEcartCalcule" text="0" styleClass="value-text-large"/>
-            </VBox>
+                    <VBox spacing="5">
+                        <Label text="Difference:" styleClass="form-label"/>
+                        <Label fx:id="lblEcartCalcule" text="0" styleClass="value-text-large"/>
+                    </VBox>
 
-            <VBox fx:id="paneMotif" spacing="5" visible="false" managed="false">
-                <Label text="Motif de l'ecart:" styleClass="form-label"/>
-                <ComboBox fx:id="comboMotif" prefWidth="200" promptText="Selectionnez un motif"/>
-            </VBox>
+                    <VBox fx:id="paneMotif" spacing="5">
+                        <Label text="Raison de la difference:" styleClass="form-label"/>
+                        <ComboBox fx:id="comboMotif" maxWidth="Infinity" promptText="Selectionnez une raison"/>
+                    </VBox>
 
-            <VBox spacing="5">
-                <Label text="Commentaire:" styleClass="form-label"/>
-                <TextArea fx:id="txtCommentaire" prefRowCount="2" promptText="Commentaire optionnel"/>
-            </VBox>
+                    <VBox spacing="5">
+                        <Label text="Commentaire:" styleClass="form-label"/>
+                        <TextArea fx:id="txtCommentaire" prefRowCount="2" promptText="Commentaire optionnel"/>
+                    </VBox>
 
-            <HBox alignment="CENTER_RIGHT" spacing="10">
-                <Button text="Annuler" onAction="#handleAnnulerComptage" styleClass="action-button">
-                    <graphic><FontIcon iconLiteral="fas-times"/></graphic>
-                </Button>
-                <Button text="Enregistrer" onAction="#handleEnregistrerComptage" styleClass="action-button, primary">
-                    <graphic><FontIcon iconLiteral="fas-save"/></graphic>
-                </Button>
-            </HBox>
+                    <HBox alignment="CENTER_RIGHT" spacing="10">
+                        <Button text="Annuler" onAction="#handleAnnulerComptage" styleClass="action-button">
+                            <graphic><FontIcon iconLiteral="fas-times"/></graphic>
+                        </Button>
+                        <Button text="Enregistrer" onAction="#handleEnregistrerComptage" styleClass="action-button, primary">
+                            <graphic><FontIcon iconLiteral="fas-save"/></graphic>
+                        </Button>
+                    </HBox>
+                </VBox>
+            </ScrollPane>
         </VBox>
     </HBox>
 
-    <!-- Historique des sessions -->
-    <VBox styleClass="panel" spacing="10">
-        <HBox alignment="CENTER_LEFT" spacing="10">
-            <FontIcon iconLiteral="fas-history" styleClass="panel-icon"/>
-            <Label text="Historique des Inventaires" styleClass="panel-title"/>
-            <Region HBox.hgrow="ALWAYS"/>
-            <Button text="Rafraichir" onAction="#handleRefresh" styleClass="action-button">
-                <graphic><FontIcon iconLiteral="fas-sync"/></graphic>
-            </Button>
-        </HBox>
+    <!-- Historique des sessions - collapsible -->
+    <TitledPane fx:id="titledPaneHistorique" text="Historique des inventaires" expanded="false" styleClass="inventaire-historique-pane">
+        <VBox styleClass="panel" spacing="10">
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <FontIcon iconLiteral="fas-history" styleClass="panel-icon"/>
+                <Label fx:id="lblHistoriqueCount" text="Historique" styleClass="panel-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <HBox styleClass="export-group">
+                    <Button text="PDF" onAction="#handleExportPDF" styleClass="export-pdf">
+                        <graphic><FontIcon iconLiteral="fas-file-pdf"/></graphic>
+                    </Button>
+                    <Button text="CSV" onAction="#handleExportCSV" styleClass="export-csv">
+                        <graphic><FontIcon iconLiteral="fas-file-csv"/></graphic>
+                    </Button>
+                    <Button text="Excel" onAction="#handleExportExcel" styleClass="export-excel">
+                        <graphic><FontIcon iconLiteral="fas-file-excel"/></graphic>
+                    </Button>
+                </HBox>
+                <Button text="Rafraichir" onAction="#handleRefresh" styleClass="action-button">
+                    <graphic><FontIcon iconLiteral="fas-sync"/></graphic>
+                </Button>
+            </HBox>
 
-        <TableView fx:id="tableHistorique" maxHeight="150" styleClass="data-table">
-            <columns>
-                <TableColumn fx:id="colHistId" text="N" prefWidth="50"/>
-                <TableColumn fx:id="colHistDebut" text="Date Debut" prefWidth="140"/>
-                <TableColumn fx:id="colHistFin" text="Date Fin" prefWidth="140"/>
-                <TableColumn fx:id="colHistStatut" text="Statut" prefWidth="100"/>
-                <TableColumn fx:id="colHistComptages" text="Comptages" prefWidth="80"/>
-                <TableColumn fx:id="colHistEcarts" text="Ecarts" prefWidth="70"/>
-                <TableColumn fx:id="colHistUtilisateur" text="Utilisateur" prefWidth="150"/>
-            </columns>
-            <placeholder>
-                <Label text="Aucun inventaire dans l'historique"/>
-            </placeholder>
-        </TableView>
-    </VBox>
+            <TableView fx:id="tableHistorique" maxHeight="180" styleClass="data-table">
+                <columns>
+                    <TableColumn fx:id="colHistId" text="N" prefWidth="50"/>
+                    <TableColumn fx:id="colHistDebut" text="Date Debut" prefWidth="140"/>
+                    <TableColumn fx:id="colHistFin" text="Date Fin" prefWidth="140"/>
+                    <TableColumn fx:id="colHistStatut" text="Statut" prefWidth="100"/>
+                    <TableColumn fx:id="colHistComptages" text="Comptages" prefWidth="80"/>
+                    <TableColumn fx:id="colHistEcarts" text="Differences" prefWidth="80"/>
+                    <TableColumn fx:id="colHistUtilisateur" text="Utilisateur" prefWidth="150"/>
+                </columns>
+                <placeholder>
+                    <Label text="Aucun inventaire dans l'historique"/>
+                </placeholder>
+            </TableView>
+        </VBox>
+    </TitledPane>
 
 </VBox>

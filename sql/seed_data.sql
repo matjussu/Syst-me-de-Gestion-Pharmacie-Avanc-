@@ -38,7 +38,7 @@ UPDATE lots SET quantite_stock = 40  WHERE id_lot = 4;
 UPDATE lots SET quantite_stock = 30  WHERE id_lot = 5;
 UPDATE lots SET quantite_stock = 60  WHERE id_lot = 6;
 UPDATE lots SET quantite_stock = 15  WHERE id_lot = 7;
-UPDATE lots SET quantite_stock = 20  WHERE id_lot = 8;
+UPDATE lots SET quantite_stock = 45  WHERE id_lot = 8;
 UPDATE lots SET quantite_stock = 45  WHERE id_lot = 9;
 UPDATE lots SET quantite_stock = 70  WHERE id_lot = 10;
 UPDATE lots SET quantite_stock = 35  WHERE id_lot = 11;
@@ -62,10 +62,11 @@ INSERT INTO lots (id_lot, id_medicament, id_fournisseur, numero_lot, date_peremp
 -- Lots PERIMES (pour alerte "Lots perimes")
 (13, 1, 1, 'DOL2023001', DATE_SUB(CURDATE(), INTERVAL 7 DAY),  DATE_SUB(CURDATE(), INTERVAL 18 MONTH), 8, 1.15),
 (14, 2, 2, 'ADV2023001', DATE_SUB(CURDATE(), INTERVAL 15 DAY), DATE_SUB(CURDATE(), INTERVAL 20 MONTH), 5, 2.00),
--- Lots avec stock bas (pour alerte "Stock bas")
-(15, 9,  1, 'OME2024001', DATE_ADD(CURDATE(), INTERVAL 12 MONTH), DATE_SUB(CURDATE(), INTERVAL 2 MONTH), 3, 2.10),
-(16, 10, 3, 'CET2024001', DATE_ADD(CURDATE(), INTERVAL 8 MONTH),  DATE_SUB(CURDATE(), INTERVAL 4 MONTH), 5, 1.90);
--- Ibuprofene Enfant (id 11) n'a aucun lot → stock 0 < seuil_min 10 → alerte stock bas
+-- Lots avec stock bas + historique de ventes (pour predictions CRITIQUE/ATTENTION)
+(15, 9,  1, 'OME2024001', DATE_ADD(CURDATE(), INTERVAL 12 MONTH), DATE_SUB(CURDATE(), INTERVAL 2 MONTH), 53, 2.10),
+(16, 10, 3, 'CET2024001', DATE_ADD(CURDATE(), INTERVAL 8 MONTH),  DATE_SUB(CURDATE(), INTERVAL 4 MONTH), 25, 1.90),
+-- Ibuprofene Enfant : lot epuise (pour prediction RUPTURE)
+(17, 11, 2, 'IBU2024001', DATE_ADD(CURDATE(), INTERVAL 10 MONTH), DATE_SUB(CURDATE(), INTERVAL 3 MONTH), 15, 1.50);
 
 
 -- =============================================================================
@@ -129,7 +130,31 @@ INSERT INTO ventes (id_vente, date_vente, montant_total, est_sur_ordonnance, num
 -- === Aujourd'hui (3 ventes) ===
 (41, CONCAT(CURDATE(), ' 09:15:00'),  7.50, FALSE, NULL,             1, NULL),
 (42, CONCAT(CURDATE(), ' 10:30:00'), 13.60, TRUE,  'ORD-2025-014',   2, NULL),
-(43, CONCAT(CURDATE(), ' 11:45:00'),  5.00, FALSE, NULL,             1, 'Vente rapide');
+(43, CONCAT(CURDATE(), ' 11:45:00'),  5.00, FALSE, NULL,             1, 'Vente rapide'),
+-- === Ventes supplementaires pour predictions (Omeprazole, Cetirizine, Ventoline, Ibuprofene Enfant) ===
+-- Omeprazole (med 9, lot 15) : 50 unites vendues => conso ~0.56/j, stock 3 => ~5j = CRITIQUE
+(44, CONCAT(DATE_SUB(CURDATE(), INTERVAL 85 DAY), ' 10:00:00'), 33.60, FALSE, NULL, 1, NULL),
+(45, CONCAT(DATE_SUB(CURDATE(), INTERVAL 72 DAY), ' 11:00:00'), 29.40, FALSE, NULL, 2, NULL),
+(46, CONCAT(DATE_SUB(CURDATE(), INTERVAL 57 DAY), ' 14:00:00'), 33.60, FALSE, NULL, 1, NULL),
+(47, CONCAT(DATE_SUB(CURDATE(), INTERVAL 42 DAY), ' 10:30:00'), 29.40, FALSE, NULL, 2, NULL),
+(48, CONCAT(DATE_SUB(CURDATE(), INTERVAL 27 DAY), ' 09:00:00'), 29.40, FALSE, NULL, 1, NULL),
+(49, CONCAT(DATE_SUB(CURDATE(), INTERVAL 12 DAY), ' 15:00:00'), 25.20, FALSE, NULL, 2, NULL),
+(50, CONCAT(DATE_SUB(CURDATE(), INTERVAL 4 DAY),  ' 11:30:00'), 29.40, FALSE, NULL, 1, NULL),
+-- Cetirizine (med 10, lot 16) : 20 unites vendues => conso ~0.22/j, stock 5 => ~22j = ATTENTION
+(51, CONCAT(DATE_SUB(CURDATE(), INTERVAL 80 DAY), ' 09:30:00'), 19.00, FALSE, NULL, 2, NULL),
+(52, CONCAT(DATE_SUB(CURDATE(), INTERVAL 60 DAY), ' 14:00:00'), 19.00, FALSE, NULL, 1, NULL),
+(53, CONCAT(DATE_SUB(CURDATE(), INTERVAL 39 DAY), ' 10:00:00'), 19.00, FALSE, NULL, 2, NULL),
+(54, CONCAT(DATE_SUB(CURDATE(), INTERVAL 15 DAY), ' 16:00:00'), 19.00, FALSE, NULL, 1, NULL),
+-- Ventoline (med 4, lot 8) : 35 unites supplementaires (total 40) => conso ~0.44/j, stock 5 => ~11j = URGENT
+(55, CONCAT(DATE_SUB(CURDATE(), INTERVAL 82 DAY), ' 10:00:00'), 24.50, TRUE,  'ORD-2025-V01', 1, NULL),
+(56, CONCAT(DATE_SUB(CURDATE(), INTERVAL 62 DAY), ' 11:00:00'), 24.50, TRUE,  'ORD-2025-V02', 2, NULL),
+(57, CONCAT(DATE_SUB(CURDATE(), INTERVAL 44 DAY), ' 14:30:00'), 24.50, TRUE,  'ORD-2025-V03', 1, NULL),
+(58, CONCAT(DATE_SUB(CURDATE(), INTERVAL 25 DAY), ' 09:00:00'), 24.50, TRUE,  'ORD-2025-V04', 2, NULL),
+(59, CONCAT(DATE_SUB(CURDATE(), INTERVAL 9 DAY),  ' 15:30:00'), 24.50, TRUE,  'ORD-2025-V05', 1, NULL),
+-- Ibuprofene Enfant (med 11, lot 17) : 15 unites vendues => conso ~0.17/j, stock 0 => RUPTURE
+(60, CONCAT(DATE_SUB(CURDATE(), INTERVAL 70 DAY), ' 10:00:00'), 14.50, FALSE, NULL, 2, NULL),
+(61, CONCAT(DATE_SUB(CURDATE(), INTERVAL 45 DAY), ' 14:00:00'), 14.50, FALSE, NULL, 1, NULL),
+(62, CONCAT(DATE_SUB(CURDATE(), INTERVAL 19 DAY), ' 11:00:00'), 14.50, FALSE, NULL, 2, NULL);
 
 
 -- =============================================================================
@@ -254,7 +279,31 @@ INSERT INTO ligne_ventes (id_vente, id_lot, quantite, prix_unitaire_applique) VA
 -- Vente 42 (13.60) : Amoxicilline x2 (lot6) [aujourd'hui, ordonnance]
 (42, 6,  2, 6.80),
 -- Vente 43 (5.00) : Doliprane x2 (lot2) [aujourd'hui]
-(43, 2,  2, 2.50);
+(43, 2,  2, 2.50),
+-- === Lignes supplementaires pour predictions ===
+-- Omeprazole (lot 15, prix 4.20) : 8+7+8+7+7+6+7 = 50 unites
+(44, 15, 8, 4.20),
+(45, 15, 7, 4.20),
+(46, 15, 8, 4.20),
+(47, 15, 7, 4.20),
+(48, 15, 7, 4.20),
+(49, 15, 6, 4.20),
+(50, 15, 7, 4.20),
+-- Cetirizine (lot 16, prix 3.80) : 5+5+5+5 = 20 unites
+(51, 16, 5, 3.80),
+(52, 16, 5, 3.80),
+(53, 16, 5, 3.80),
+(54, 16, 5, 3.80),
+-- Ventoline (lot 8, prix 3.50) : 7+7+7+7+7 = 35 unites (+ 5 existantes = 40 total)
+(55, 8,  7, 3.50),
+(56, 8,  7, 3.50),
+(57, 8,  7, 3.50),
+(58, 8,  7, 3.50),
+(59, 8,  7, 3.50),
+-- Ibuprofene Enfant (lot 17, prix 2.90) : 5+5+5 = 15 unites
+(60, 17, 5, 2.90),
+(61, 17, 5, 2.90),
+(62, 17, 5, 2.90);
 
 
 -- =============================================================================
@@ -267,11 +316,14 @@ INSERT INTO ligne_ventes (id_vente, id_lot, quantite, prix_unitaire_applique) VA
 -- Lot 5  (Advil)        : 30  - 15 vendu  + 1 retour                       = 16
 -- Lot 6  (Amoxicilline) : 60  - 9  vendu             - 1 inventaire(perte) = 50
 -- Lot 7  (Amoxicilline) : 15  - 6  vendu                                   = 9
--- Lot 8  (Ventoline)    : 20  - 5  vendu                                   = 15
+-- Lot 8  (Ventoline)    : 45  - 40 vendu                                   = 5
 -- Lot 9  (Levothyrox)   : 45  - 9  vendu                                   = 36
 -- Lot 10 (Spasfon)      : 70  - 17 vendu                                   = 53
 -- Lot 11 (Gaviscon)     : 35  - 7  vendu             - 1 inventaire(ajust) = 27
 -- Lot 12 (Kardegic)     : 55  - 11 vendu                                   = 44
+-- Lot 15 (Omeprazole)   : 53  - 50 vendu                                   = 3
+-- Lot 16 (Cetirizine)   : 25  - 20 vendu                                   = 5
+-- Lot 17 (Ibu.Enfant)   : 15  - 15 vendu                                   = 0
 
 UPDATE lots SET quantite_stock = 28 WHERE id_lot = 1;
 UPDATE lots SET quantite_stock = 90 WHERE id_lot = 2;
@@ -280,11 +332,14 @@ UPDATE lots SET quantite_stock = 12 WHERE id_lot = 3;
 UPDATE lots SET quantite_stock = 16 WHERE id_lot = 5;
 UPDATE lots SET quantite_stock = 50 WHERE id_lot = 6;
 UPDATE lots SET quantite_stock = 9  WHERE id_lot = 7;
-UPDATE lots SET quantite_stock = 15 WHERE id_lot = 8;
+UPDATE lots SET quantite_stock = 5  WHERE id_lot = 8;
 UPDATE lots SET quantite_stock = 36 WHERE id_lot = 9;
 UPDATE lots SET quantite_stock = 53 WHERE id_lot = 10;
 UPDATE lots SET quantite_stock = 27 WHERE id_lot = 11;
 UPDATE lots SET quantite_stock = 44 WHERE id_lot = 12;
+UPDATE lots SET quantite_stock = 3  WHERE id_lot = 15;
+UPDATE lots SET quantite_stock = 5  WHERE id_lot = 16;
+UPDATE lots SET quantite_stock = 0  WHERE id_lot = 17;
 
 
 -- =============================================================================
@@ -420,8 +475,8 @@ INSERT INTO regularisations (id_regularisation, id_session, id_lot, quantite_anc
 -- SECTION 8 : Reset des compteurs AUTO_INCREMENT
 -- =============================================================================
 
-ALTER TABLE ventes              AUTO_INCREMENT = 44;
-ALTER TABLE ligne_ventes        AUTO_INCREMENT = 100;
+ALTER TABLE ventes              AUTO_INCREMENT = 63;
+ALTER TABLE ligne_ventes        AUTO_INCREMENT = 120;
 ALTER TABLE commandes           AUTO_INCREMENT = 6;
 ALTER TABLE ligne_commandes     AUTO_INCREMENT = 12;
 ALTER TABLE audit_log           AUTO_INCREMENT = 100;
@@ -430,7 +485,7 @@ ALTER TABLE sessions_inventaire AUTO_INCREMENT = 2;
 ALTER TABLE comptages_inventaire AUTO_INCREMENT = 7;
 ALTER TABLE regularisations     AUTO_INCREMENT = 4;
 ALTER TABLE medicaments         AUTO_INCREMENT = 12;
-ALTER TABLE lots                AUTO_INCREMENT = 17;
+ALTER TABLE lots                AUTO_INCREMENT = 18;
 
 
 -- =============================================================================

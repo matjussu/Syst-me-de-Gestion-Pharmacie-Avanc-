@@ -35,6 +35,7 @@ public class ConfigService {
         DEFAULT_PROPS.setProperty("pharmacie.nom", "ApotiCare");
         DEFAULT_PROPS.setProperty("pharmacie.adresse", "");
         DEFAULT_PROPS.setProperty("pharmacie.telephone", "");
+        DEFAULT_PROPS.setProperty("pharmacie.siret", "");
         DEFAULT_PROPS.setProperty("alerte.peremption.jours", "90");
         DEFAULT_PROPS.setProperty("alerte.stock.seuil.defaut", "10");
         DEFAULT_PROPS.setProperty("rapports.repertoire", System.getProperty("user.home") + "/ApotiCare_Rapports");
@@ -144,6 +145,10 @@ public class ConfigService {
         return config.getProperty("pharmacie.telephone");
     }
 
+    public String getPharmacieSiret() {
+        return config.getProperty("pharmacie.siret");
+    }
+
     public int getAlertePeremptionJours() {
         try {
             return Integer.parseInt(config.getProperty("alerte.peremption.jours", "90"));
@@ -208,6 +213,10 @@ public class ConfigService {
 
     public void setPharmacieTelephone(String telephone) {
         config.setProperty("pharmacie.telephone", telephone != null ? telephone : "");
+    }
+
+    public void setPharmacieSiret(String siret) {
+        config.setProperty("pharmacie.siret", siret != null ? siret : "");
     }
 
     public void setAlertePeremptionJours(int jours) {

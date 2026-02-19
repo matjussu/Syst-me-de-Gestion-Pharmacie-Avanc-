@@ -110,6 +110,10 @@ public class DashboardController {
         this.venteDAO = new VenteDAOImpl();
     }
 
+    public StackPane getContentArea() {
+        return contentArea;
+    }
+
     @FXML
     public void initialize() {
         setupDateLabel();
@@ -141,7 +145,30 @@ public class DashboardController {
     public void setCurrentUser(Utilisateur user) {
         this.currentUser = user;
         updateUserInfo();
+        configureAccessByRole();
         loadDashboardData();
+    }
+
+    private void configureAccessByRole() {
+        boolean isAdmin = currentUser != null && currentUser.isAdmin();
+
+        // Sections reservees au pharmacien
+        setNodeAccessible(btnCommandes, isAdmin);
+        setNodeAccessible(btnRetours, isAdmin);
+        setNodeAccessible(btnInventaire, isAdmin);
+        setNodeAccessible(btnPredictions, isAdmin);
+        setNodeAccessible(btnStatistiques, isAdmin);
+        setNodeAccessible(btnUtilisateurs, isAdmin);
+        setNodeAccessible(btnAudit, isAdmin);
+        setNodeAccessible(btnBackup, isAdmin);
+        setNodeAccessible(btnSettings, isAdmin);
+    }
+
+    private void setNodeAccessible(Node node, boolean accessible) {
+        if (node != null) {
+            node.setVisible(accessible);
+            node.setManaged(accessible);
+        }
     }
 
     public void setAuthService(AuthenticationService authService) {
@@ -206,6 +233,11 @@ public class DashboardController {
     }
 
     public void navigateToCommandeWithMedicament(String medicamentName) {
+        if (currentUser == null || !currentUser.isAdmin()) {
+            DialogHelper.showWarning(contentArea, "Acces refuse",
+                    "Seuls les pharmaciens peuvent acceder aux commandes.");
+            return;
+        }
         setActiveButton(btnCommandes);
         lblPageTitle.setText("Commandes Fournisseurs");
         lblPageSubtitle.setText("Gestion des approvisionnements");
@@ -333,6 +365,11 @@ public class DashboardController {
 
     @FXML
     private void showRetours() {
+        if (currentUser == null || !currentUser.isAdmin()) {
+            DialogHelper.showWarning(contentArea, "Acces refuse",
+                    "Seuls les pharmaciens peuvent acceder aux retours produits.");
+            return;
+        }
         setActiveButton(btnRetours);
         lblPageTitle.setText("Retours Produits");
         lblPageSubtitle.setText("Gestion des retours et reintegration stock");
@@ -349,6 +386,11 @@ public class DashboardController {
 
     @FXML
     private void showInventaire() {
+        if (currentUser == null || !currentUser.isAdmin()) {
+            DialogHelper.showWarning(contentArea, "Acces refuse",
+                    "Seuls les pharmaciens peuvent acceder a l'inventaire.");
+            return;
+        }
         setActiveButton(btnInventaire);
         lblPageTitle.setText("Inventaire");
         lblPageSubtitle.setText("Comptage physique et regularisation des ecarts");
@@ -357,6 +399,11 @@ public class DashboardController {
 
     @FXML
     private void showCommandes() {
+        if (currentUser == null || !currentUser.isAdmin()) {
+            DialogHelper.showWarning(contentArea, "Acces refuse",
+                    "Seuls les pharmaciens peuvent acceder aux commandes.");
+            return;
+        }
         setActiveButton(btnCommandes);
         lblPageTitle.setText("Commandes Fournisseurs");
         lblPageSubtitle.setText("Gestion des approvisionnements");
@@ -373,6 +420,11 @@ public class DashboardController {
 
     @FXML
     private void showPredictions() {
+        if (currentUser == null || !currentUser.isAdmin()) {
+            DialogHelper.showWarning(contentArea, "Acces refuse",
+                    "Seuls les pharmaciens peuvent acceder aux predictions.");
+            return;
+        }
         setActiveButton(btnPredictions);
         lblPageTitle.setText("Predictions");
         lblPageSubtitle.setText("Previsions de reapprovisionnement");
@@ -381,6 +433,11 @@ public class DashboardController {
 
     @FXML
     private void showStatistiques() {
+        if (currentUser == null || !currentUser.isAdmin()) {
+            DialogHelper.showWarning(contentArea, "Acces refuse",
+                    "Seuls les pharmaciens peuvent acceder aux statistiques.");
+            return;
+        }
         setActiveButton(btnStatistiques);
         lblPageTitle.setText("Statistiques");
         lblPageSubtitle.setText("Graphiques et analyses des ventes");
@@ -624,20 +681,6 @@ public class DashboardController {
 
         } catch (IOException e) {
             logger.error("Erreur lors du retour a l'ecran de connexion", e);
-        }
-    }
-
-    private void showAlert(Alert.AlertType type, String title, String message) {
-        switch (type) {
-            case ERROR:
-                DialogHelper.showError(contentArea, title, message);
-                break;
-            case WARNING:
-                DialogHelper.showWarning(contentArea, title, message);
-                break;
-            default:
-                DialogHelper.showInfo(contentArea, title, message);
-                break;
         }
     }
 

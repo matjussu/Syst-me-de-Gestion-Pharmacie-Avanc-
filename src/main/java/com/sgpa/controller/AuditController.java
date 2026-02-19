@@ -67,6 +67,13 @@ public class AuditController extends BaseController {
         this.exportService = new ExportService();
     }
 
+    @Override
+    protected void onUserSet() {
+        if (currentUser == null || !currentUser.isAdmin()) {
+            logger.warn("Acces non autorise au journal d'audit");
+        }
+    }
+
     @FXML
     public void initialize() {
         setupTable();
@@ -237,8 +244,7 @@ public class AuditController extends BaseController {
             @Override
             protected void failed() {
                 logger.error("Erreur chargement audit", getException());
-                showAlert(Alert.AlertType.ERROR, "Erreur",
-                        "Impossible de charger le journal: " + getException().getMessage());
+                showError("Erreur", "Impossible de charger le journal: " + getException().getMessage());
             }
         };
         runAsync(task);
@@ -310,24 +316,15 @@ public class AuditController extends BaseController {
 
         exportTask.setOnSucceeded(event -> {
             String filePath = exportTask.getValue();
-            showAlert(Alert.AlertType.INFORMATION, "Export reussi",
-                    "Le journal d'audit a ete exporte vers:\n" + filePath);
+            showSuccess("Export reussi", "Le journal d'audit a ete exporte vers:\n" + filePath);
         });
 
         exportTask.setOnFailed(event -> {
             logger.error("Erreur lors de l'export CSV", exportTask.getException());
-            showAlert(Alert.AlertType.ERROR, "Erreur",
-                    "Une erreur est survenue lors de l'export CSV.");
+            showError("Erreur", "Une erreur est survenue lors de l'export CSV.");
         });
 
         runAsync(exportTask);
     }
 
-    private void showAlert(Alert.AlertType type, String title, String message) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
 }

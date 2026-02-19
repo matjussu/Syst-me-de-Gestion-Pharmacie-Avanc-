@@ -20,6 +20,17 @@
             <graphic><FontIcon iconLiteral="fas-search"/></graphic>
         </Button>
         <Region HBox.hgrow="ALWAYS"/>
+        <HBox styleClass="export-group">
+            <Button text="PDF" onAction="#handleExportPDF" styleClass="export-pdf">
+                <graphic><FontIcon iconLiteral="fas-file-pdf"/></graphic>
+            </Button>
+            <Button text="CSV" onAction="#handleExportCSV" styleClass="export-csv">
+                <graphic><FontIcon iconLiteral="fas-file-csv"/></graphic>
+            </Button>
+            <Button text="Excel" onAction="#handleExportExcel" styleClass="export-excel">
+                <graphic><FontIcon iconLiteral="fas-file-excel"/></graphic>
+            </Button>
+        </HBox>
         <Button text="Nouveau Medicament" onAction="#handleNew" styleClass="action-button, primary">
             <graphic><FontIcon iconLiteral="fas-plus"/></graphic>
         </Button>

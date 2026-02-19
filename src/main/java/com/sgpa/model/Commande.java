@@ -45,6 +45,9 @@ public class Commande {
     /** Reference vers le fournisseur (pour jointures) */
     private Fournisseur fournisseur;
 
+    /** Nombre total d'articles (pre-calcule par SQL, non persiste) */
+    private int nbArticlesTotal = -1;
+
     /**
      * Constructeur par defaut.
      */
@@ -153,6 +156,14 @@ public class Commande {
         this.fournisseur = fournisseur;
     }
 
+    public int getNbArticlesTotal() {
+        return nbArticlesTotal;
+    }
+
+    public void setNbArticlesTotal(int nbArticlesTotal) {
+        this.nbArticlesTotal = nbArticlesTotal;
+    }
+
     // Methodes metier
 
     /**
@@ -217,10 +228,12 @@ public class Commande {
      * @return le nombre total d'articles
      */
     public int getNombreArticlesCommandes() {
-        if (lignesCommande == null) return 0;
-        return lignesCommande.stream()
-                .mapToInt(LigneCommande::getQuantiteCommandee)
-                .sum();
+        if (lignesCommande != null && !lignesCommande.isEmpty()) {
+            return lignesCommande.stream()
+                    .mapToInt(LigneCommande::getQuantiteCommandee)
+                    .sum();
+        }
+        return Math.max(nbArticlesTotal, 0);
     }
 
     @Override

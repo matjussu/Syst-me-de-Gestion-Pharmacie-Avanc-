@@ -1,8 +1,8 @@
 package com.sgpa.controller;
 
 import com.sgpa.dto.PredictionReapprovisionnement;
-import com.sgpa.exception.ServiceException;
 import com.sgpa.service.ConfigService;
+import com.sgpa.service.ExcelExportService;
 import com.sgpa.service.PredictionService;
 import com.sgpa.service.RapportService;
 import javafx.application.Platform;
@@ -18,20 +18,21 @@ import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
-import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Controleur pour la vue des predictions de reapprovisionnement.
  *
  * @author SGPA Team
- * @version 1.0
+ * @version 1.1
  */
 public class PredictionController extends BaseController {
 
@@ -40,8 +41,13 @@ public class PredictionController extends BaseController {
 
     @FXML private ComboBox<String> comboPeriode;
     @FXML private TextField txtRecherche;
-    @FXML private Button btnCreerCommande;
     @FXML private Button btnCommanderDetail;
+
+    // Badges statistiques (cliquables pour filtrer)
+    @FXML private HBox badgeTotal;
+    @FXML private HBox badgeRuptures;
+    @FXML private HBox badgeCritiques;
+    @FXML private HBox badgeUrgents;
 
     // Labels statistiques
     @FXML private Label lblTotal;
@@ -59,8 +65,12 @@ public class PredictionController extends BaseController {
     @FXML private TableColumn<PredictionReapprovisionnement, Number> colQuantiteSuggeree;
     @FXML private TableColumn<PredictionReapprovisionnement, String> colUrgence;
 
-    // Detail
+    // Detail - placeholder et contenu
     @FXML private Label lblDetailTitre;
+    @FXML private VBox detailPlaceholder;
+    @FXML private VBox detailContent;
+
+    // Detail - labels
     @FXML private Label lblDetailStock;
     @FXML private Label lblDetailConsoMois;
     @FXML private Label lblDetailSeuil;
@@ -74,14 +84,17 @@ public class PredictionController extends BaseController {
     private final PredictionService predictionService;
     private final ConfigService configService;
     private final RapportService rapportService;
+    private final ExcelExportService excelExportService;
 
     private ObservableList<PredictionReapprovisionnement> predictions;
     private FilteredList<PredictionReapprovisionnement> filteredPredictions;
+    private String activeFilter = null;
 
     public PredictionController() {
         this.predictionService = new PredictionService();
         this.configService = new ConfigService();
         this.rapportService = new RapportService();
+        this.excelExportService = new ExcelExportService();
     }
 
     @FXML
@@ -90,7 +103,9 @@ public class PredictionController extends BaseController {
         setupTable();
         setupSearch();
         setupSelection();
+        setupBadgeFilters();
         setupResponsiveTable(tablePredictions);
+        clearDetail();
     }
 
     @Override
@@ -105,7 +120,6 @@ public class PredictionController extends BaseController {
     }
 
     private void setupTable() {
-        // Configuration des colonnes
         colMedicament.setCellValueFactory(data ->
                 new SimpleStringProperty(data.getValue().getNomMedicament()));
 
@@ -113,14 +127,18 @@ public class PredictionController extends BaseController {
                 new SimpleIntegerProperty(data.getValue().getStockVendable()));
 
         colConsoJour.setCellValueFactory(data ->
-                new SimpleStringProperty(String.format("%.1f", data.getValue().getConsommationJournaliere())));
+                new SimpleStringProperty(String.format("%.1f /j", data.getValue().getConsommationJournaliere())));
 
         colJoursRestants.setCellValueFactory(data ->
                 new SimpleStringProperty(data.getValue().getJoursRestantsFormate()));
 
         colDateRupture.setCellValueFactory(data -> {
-            LocalDate date = data.getValue().getDateRupturePrevue();
-            return new SimpleStringProperty(date != null ? date.format(DATE_FORMATTER) : "N/A");
+            PredictionReapprovisionnement p = data.getValue();
+            if (p.getConsommationJournaliere() <= 0) {
+                return new SimpleStringProperty("Aucune vente");
+            }
+            LocalDate date = p.getDateRupturePrevue();
+            return new SimpleStringProperty(date != null ? date.format(DATE_FORMATTER) : "-");
         });
 
         colQuantiteSuggeree.setCellValueFactory(data ->
@@ -174,16 +192,7 @@ public class PredictionController extends BaseController {
     }
 
     private void setupSearch() {
-        txtRecherche.textProperty().addListener((obs, oldVal, newVal) -> {
-            if (filteredPredictions != null) {
-                filteredPredictions.setPredicate(p -> {
-                    if (newVal == null || newVal.isEmpty()) {
-                        return true;
-                    }
-                    return p.getNomMedicament().toLowerCase().contains(newVal.toLowerCase());
-                });
-            }
-        });
+        txtRecherche.textProperty().addListener((obs, oldVal, newVal) -> applyFilters());
     }
 
     private void setupSelection() {
@@ -191,15 +200,80 @@ public class PredictionController extends BaseController {
                 (obs, oldVal, newVal) -> {
                     if (newVal != null) {
                         showDetail(newVal);
-                        btnCreerCommande.setDisable(false);
-                        btnCommanderDetail.setDisable(false);
+                        detailPlaceholder.setVisible(false);
+                        detailPlaceholder.setManaged(false);
+                        detailContent.setVisible(true);
+                        detailContent.setManaged(true);
                     } else {
                         clearDetail();
-                        btnCreerCommande.setDisable(true);
-                        btnCommanderDetail.setDisable(true);
                     }
                 });
     }
+
+    // -----------------------------------------------------------------------
+    // Filtres par badges cliquables
+    // -----------------------------------------------------------------------
+
+    private void setupBadgeFilters() {
+        setupBadgeClick(badgeTotal, null);
+        setupBadgeClick(badgeRuptures, PredictionReapprovisionnement.NIVEAU_RUPTURE);
+        setupBadgeClick(badgeCritiques, PredictionReapprovisionnement.NIVEAU_CRITIQUE);
+        setupBadgeClick(badgeUrgents, PredictionReapprovisionnement.NIVEAU_URGENT);
+    }
+
+    private void setupBadgeClick(HBox badge, String filterLevel) {
+        badge.setOnMouseClicked(e -> {
+            if (filterLevel != null && filterLevel.equals(activeFilter)) {
+                activeFilter = null;
+            } else {
+                activeFilter = filterLevel;
+            }
+            updateBadgeStyles();
+            applyFilters();
+        });
+    }
+
+    private void updateBadgeStyles() {
+        badgeTotal.getStyleClass().remove("badge-active");
+        badgeRuptures.getStyleClass().remove("badge-active");
+        badgeCritiques.getStyleClass().remove("badge-active");
+        badgeUrgents.getStyleClass().remove("badge-active");
+
+        HBox activeBadge = badgeTotal;
+        if (activeFilter != null) {
+            activeBadge = switch (activeFilter) {
+                case PredictionReapprovisionnement.NIVEAU_RUPTURE -> badgeRuptures;
+                case PredictionReapprovisionnement.NIVEAU_CRITIQUE -> badgeCritiques;
+                case PredictionReapprovisionnement.NIVEAU_URGENT -> badgeUrgents;
+                default -> badgeTotal;
+            };
+        }
+        if (!activeBadge.getStyleClass().contains("badge-active")) {
+            activeBadge.getStyleClass().add("badge-active");
+        }
+    }
+
+    private void applyFilters() {
+        if (filteredPredictions == null) return;
+        filteredPredictions.setPredicate(p -> {
+            // Filtre texte
+            String searchText = txtRecherche.getText();
+            if (searchText != null && !searchText.isEmpty()) {
+                if (!p.getNomMedicament().toLowerCase().contains(searchText.toLowerCase())) {
+                    return false;
+                }
+            }
+            // Filtre badge
+            if (activeFilter != null) {
+                return activeFilter.equals(p.getNiveauUrgence());
+            }
+            return true;
+        });
+    }
+
+    // -----------------------------------------------------------------------
+    // Chargement des predictions
+    // -----------------------------------------------------------------------
 
     private int getSelectedPeriod() {
         String selected = comboPeriode.getValue();
@@ -224,18 +298,23 @@ public class PredictionController extends BaseController {
             @Override
             protected void succeeded() {
                 List<PredictionReapprovisionnement> result = getValue();
+                // Tri par urgence : RUPTURE en haut, OK en bas
+                result.sort(Comparator.comparingInt(PredictionReapprovisionnement::getOrdreUrgence));
+
                 predictions = FXCollections.observableArrayList(result);
                 filteredPredictions = new FilteredList<>(predictions, p -> true);
                 tablePredictions.setItems(filteredPredictions);
 
+                applyFilters();
                 updateStats(result);
+                updateBadgeStyles();
                 logger.info("{} predictions chargees", result.size());
             }
 
             @Override
             protected void failed() {
                 logger.error("Erreur lors du chargement des predictions", getException());
-                showAlert(Alert.AlertType.ERROR, "Erreur",
+                showError("Erreur",
                         "Impossible de charger les predictions: " + getException().getMessage());
             }
         };
@@ -261,6 +340,10 @@ public class PredictionController extends BaseController {
         lblUrgents.setText(urgents + " urgent(s)");
     }
 
+    // -----------------------------------------------------------------------
+    // Panneau detail
+    // -----------------------------------------------------------------------
+
     private void showDetail(PredictionReapprovisionnement prediction) {
         lblDetailTitre.setText(prediction.getNomMedicament());
         lblDetailStock.setText(String.valueOf(prediction.getStockVendable()));
@@ -268,18 +351,21 @@ public class PredictionController extends BaseController {
         lblDetailSeuil.setText(String.valueOf(prediction.getSeuilMin()));
         lblDetailDelai.setText(configService.getPredictionDelaiLivraisonDefaut() + " jours");
 
-        // Mettre a jour le graphique
         updateChart(prediction);
     }
 
     private void clearDetail() {
         lblDetailTitre.setText("Detail du medicament");
-        lblDetailStock.setText("-");
-        lblDetailConsoMois.setText("-");
-        lblDetailSeuil.setText("-");
-        lblDetailDelai.setText("-");
+        detailPlaceholder.setVisible(true);
+        detailPlaceholder.setManaged(true);
+        detailContent.setVisible(false);
+        detailContent.setManaged(false);
         chartPrevision.getData().clear();
     }
+
+    // -----------------------------------------------------------------------
+    // Graphique
+    // -----------------------------------------------------------------------
 
     private void updateChart(PredictionReapprovisionnement prediction) {
         chartPrevision.getData().clear();
@@ -294,9 +380,17 @@ public class PredictionController extends BaseController {
         double consoJour = prediction.getConsommationJournaliere();
         int seuil = prediction.getSeuilMin();
 
-        // Generer les points pour les 60 prochains jours
+        // Adapter la duree du graphique a la situation
+        int chartDays = 60;
+        if (consoJour > 0) {
+            int daysToZero = (int) Math.ceil(stock / consoJour);
+            chartDays = Math.max(30, Math.min(90, daysToZero + 15));
+        }
+
+        int step = Math.max(1, chartDays / 12);
         LocalDate today = LocalDate.now();
-        for (int i = 0; i <= 60; i += 5) {
+
+        for (int i = 0; i <= chartDays; i += step) {
             String dateLabel = today.plusDays(i).format(DateTimeFormatter.ofPattern("dd/MM"));
             int stockPrevu = Math.max(0, (int) (stock - (consoJour * i)));
             stockSeries.getData().add(new XYChart.Data<>(dateLabel, stockPrevu));
@@ -304,7 +398,30 @@ public class PredictionController extends BaseController {
         }
 
         chartPrevision.getData().addAll(stockSeries, seuilSeries);
+
+        // Styler la ligne seuil en pointilles rouges (ligne + legende)
+        Platform.runLater(() -> {
+            if (seuilSeries.getNode() != null) {
+                seuilSeries.getNode().setStyle(
+                        "-fx-stroke-dash-array: 8 4; -fx-stroke: #dc3545; -fx-stroke-width: 1.5;");
+            }
+            for (XYChart.Data<String, Number> data : seuilSeries.getData()) {
+                if (data.getNode() != null) {
+                    data.getNode().setVisible(false);
+                }
+            }
+            // Corriger la couleur de la legende pour correspondre a la ligne
+            for (javafx.scene.Node node : chartPrevision.lookupAll(".chart-legend-item-symbol")) {
+                if (node.getStyleClass().contains("default-color1")) {
+                    node.setStyle("-fx-background-color: #dc3545;");
+                }
+            }
+        });
     }
+
+    // -----------------------------------------------------------------------
+    // Actions
+    // -----------------------------------------------------------------------
 
     @FXML
     private void handleRefresh() {
@@ -312,88 +429,37 @@ public class PredictionController extends BaseController {
     }
 
     @FXML
-    private void handleCreerCommande() {
-        List<PredictionReapprovisionnement> selected =
-                tablePredictions.getSelectionModel().getSelectedItems();
-
-        if (selected == null || selected.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Selection requise",
-                    "Veuillez selectionner au moins un medicament.");
-            return;
-        }
-
-        // Construire un message recapitulatif
-        StringBuilder message = new StringBuilder("Medicaments a commander:\n\n");
-        for (PredictionReapprovisionnement p : selected) {
-            message.append("- ").append(p.getNomMedicament())
-                   .append(": ").append(p.getQuantiteSuggeree()).append(" unites\n");
-        }
-        message.append("\nAccedez au module Commandes pour creer la commande.");
-
-        showAlert(Alert.AlertType.INFORMATION, "Commande suggeree", message.toString());
-
-        // Naviguer vers la page des commandes
-        if (dashboardController != null) {
-            // TODO: Passer les donnees pre-remplies au CommandeController
-        }
-    }
-
-    @FXML
     private void handleCommanderMedicament() {
         PredictionReapprovisionnement selected = tablePredictions.getSelectionModel().getSelectedItem();
 
         if (selected == null) {
-            showAlert(Alert.AlertType.WARNING, "Selection requise",
+            showWarning("Selection requise",
                     "Veuillez selectionner un medicament.");
             return;
         }
 
-        String message = String.format(
-                "Medicament: %s\nQuantite suggeree: %d unites\n\nAccedez au module Commandes pour creer la commande.",
-                selected.getNomMedicament(), selected.getQuantiteSuggeree());
-
-        showAlert(Alert.AlertType.INFORMATION, "Commande suggeree", message);
+        if (dashboardController != null) {
+            dashboardController.navigateToCommandeWithMedicament(selected.getNomMedicament());
+        }
     }
 
     @FXML
     private void handleExportPDF() {
         if (predictions == null || predictions.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Aucune donnee",
+            showWarning("Aucune donnee",
                     "Aucune prediction a exporter.");
             return;
         }
-
-        Task<String> exportTask = new Task<>() {
-            @Override
-            protected String call() throws Exception {
-                return rapportService.genererRapportPredictions(predictions);
-            }
-
-            @Override
-            protected void succeeded() {
-                String filePath = getValue();
-                showAlert(Alert.AlertType.INFORMATION, "Export reussi",
-                        "Le rapport a ete genere:\n" + filePath);
-            }
-
-            @Override
-            protected void failed() {
-                logger.error("Erreur lors de l'export PDF", getException());
-                showAlert(Alert.AlertType.ERROR, "Erreur d'export",
-                        "Impossible de generer le rapport: " + getException().getMessage());
-            }
-        };
-
-        runAsync(exportTask);
+        executeExport(() -> rapportService.genererRapportPredictions(predictions), "Export PDF Predictions", true);
     }
 
-    private void showAlert(Alert.AlertType type, String title, String message) {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(type);
-            alert.setTitle(title);
-            alert.setHeaderText(null);
-            alert.setContentText(message);
-            alert.showAndWait();
-        });
+    @FXML
+    private void handleExportExcel() {
+        if (predictions == null || predictions.isEmpty()) {
+            showWarning("Aucune donnee", "Aucune prediction a exporter.");
+            return;
+        }
+        executeExport(() -> excelExportService.exportPredictions(predictions), "Export Excel Predictions", true);
     }
+
 }

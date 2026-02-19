@@ -46,6 +46,9 @@ public class Vente {
     /** Reference vers l'utilisateur (pour jointures) */
     private Utilisateur utilisateur;
 
+    /** Cache pour le nombre d'articles (rempli par les requetes avec sous-requete SQL) */
+    private int nombreArticlesCache = -1;
+
     /**
      * Constructeur par defaut.
      */
@@ -212,10 +215,15 @@ public class Vente {
      * @return le nombre total d'articles
      */
     public int getNombreArticles() {
+        if (nombreArticlesCache >= 0) return nombreArticlesCache;
         if (lignesVente == null) return 0;
         return lignesVente.stream()
                 .mapToInt(LigneVente::getQuantite)
                 .sum();
+    }
+
+    public void setNombreArticlesCache(int nombreArticlesCache) {
+        this.nombreArticlesCache = nombreArticlesCache;
     }
 
     @Override

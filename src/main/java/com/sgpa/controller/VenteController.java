@@ -31,7 +31,6 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Controleur pour l'ecran de vente.
@@ -260,8 +259,7 @@ public class VenteController extends BaseController {
 
         int quantite = spinnerQuantite.getValue();
         if (quantite > selected.stock) {
-            showAlert(Alert.AlertType.WARNING, "Stock insuffisant",
-                    "Stock disponible: " + selected.stock + " unites");
+            showWarning("Stock insuffisant", "Stock disponible: " + selected.stock + " unites");
             return;
         }
 
@@ -270,7 +268,7 @@ public class VenteController extends BaseController {
             if (ligne.idMedicament == selected.id) {
                 int newQte = ligne.quantite + quantite;
                 if (newQte > selected.stock) {
-                    showAlert(Alert.AlertType.WARNING, "Stock insuffisant",
+                    showWarning("Stock insuffisant",
                             "Vous avez deja " + ligne.quantite + " dans le panier. Stock disponible: " + selected.stock);
                     return;
                 }
@@ -290,23 +288,16 @@ public class VenteController extends BaseController {
     private void handleClearCart() {
         if (panierData.isEmpty()) return;
 
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Vider le panier");
-        confirm.setHeaderText("Confirmer");
-        confirm.setContentText("Voulez-vous vraiment vider le panier ?");
-
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                panierData.clear();
-                updateTotals();
-            }
+        showConfirmation("Vider le panier", "Voulez-vous vraiment vider le panier ?", () -> {
+            panierData.clear();
+            updateTotals();
         });
     }
 
     @FXML
     private void handleValidateSale() {
         if (panierData.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Panier vide", "Ajoutez des medicaments au panier");
+            showWarning("Panier vide", "Ajoutez des medicaments au panier");
             return;
         }
 
@@ -336,26 +327,23 @@ public class VenteController extends BaseController {
                     vente.getIdVente(), vente.getMontantTotal());
 
             // Proposer l'impression du ticket
-            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-            confirm.setTitle("Vente enregistree");
-            confirm.setHeaderText("Vente N°" + vente.getIdVente() + " enregistree avec succes");
-            confirm.setContentText("Montant total: " + PRICE_FORMAT.format(vente.getMontantTotal()) + " EUR\n\n" +
-                    "Voulez-vous imprimer le ticket de caisse ?");
+            Runnable resetAfterSale = () -> {
+                panierData.clear();
+                updateTotals();
+                loadAllMedicaments();
+                btnValider.setDisable(false);
+            };
 
-            ButtonType btnImprimer = new ButtonType("Imprimer ticket");
-            ButtonType btnNon = new ButtonType("Non merci");
-            confirm.getButtonTypes().setAll(btnImprimer, btnNon);
-
-            Optional<ButtonType> result = confirm.showAndWait();
-            if (result.isPresent() && result.get() == btnImprimer) {
-                imprimerTicket(vente);
-            }
-
-            // Reinitialiser
-            panierData.clear();
-            updateTotals();
-            loadAllMedicaments(); // Rafraichir les stocks
-            btnValider.setDisable(false);
+            showConfirmation("Vente enregistree",
+                    "Vente N°" + vente.getIdVente() + " enregistree avec succes\n" +
+                    "Montant total: " + PRICE_FORMAT.format(vente.getMontantTotal()) + " EUR\n\n" +
+                    "Voulez-vous imprimer le ticket de caisse ?",
+                    "Imprimer ticket", "Non merci",
+                    () -> {
+                        imprimerTicket(vente);
+                        resetAfterSale.run();
+                    },
+                    resetAfterSale);
         });
 
         venteTask.setOnFailed(event -> {
@@ -367,7 +355,7 @@ public class VenteController extends BaseController {
                 message = ex.getMessage();
             }
 
-            showAlert(Alert.AlertType.ERROR, "Erreur", message);
+            showError("Erreur", message);
             btnValider.setDisable(false);
         });
 
@@ -385,14 +373,6 @@ public class VenteController extends BaseController {
 
         btnValider.setDisable(panierData.isEmpty());
         btnViderPanier.setDisable(panierData.isEmpty());
-    }
-
-    private void showAlert(Alert.AlertType type, String title, String message) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
     }
 
     /**
@@ -430,11 +410,11 @@ public class VenteController extends BaseController {
                     }
                     pb.start();
                 }
-                showAlert(Alert.AlertType.INFORMATION, "Ticket genere",
+                showSuccess("Ticket genere",
                         "Le ticket a ete genere:\n" + filePath);
             } catch (Throwable e) {
                 logger.warn("Impossible d'ouvrir le PDF automatiquement", e);
-                showAlert(Alert.AlertType.INFORMATION, "Ticket genere",
+                showSuccess("Ticket genere",
                         "Le ticket a ete genere:\n" + filePath + "\n\n" +
                                 "(Ouverture automatique non disponible)");
             }
@@ -442,7 +422,7 @@ public class VenteController extends BaseController {
 
         printTask.setOnFailed(event -> {
             logger.error("Erreur lors de la generation du ticket", printTask.getException());
-            showAlert(Alert.AlertType.ERROR, "Erreur",
+            showError("Erreur",
                     "Impossible de generer le ticket de caisse.");
         });
 

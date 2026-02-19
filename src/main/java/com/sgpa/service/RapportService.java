@@ -4,8 +4,10 @@ import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.TextAlignment;
+import com.sgpa.dao.LotDAO;
 import com.sgpa.dao.MedicamentDAO;
 import com.sgpa.dao.VenteDAO;
+import com.sgpa.dao.impl.LotDAOImpl;
 import com.sgpa.dao.impl.MedicamentDAOImpl;
 import com.sgpa.dao.impl.VenteDAOImpl;
 import com.sgpa.dto.AlertePeremption;
@@ -46,6 +48,7 @@ public class RapportService {
     private final PDFGenerator pdfGenerator;
     private final VenteDAO venteDAO;
     private final MedicamentDAO medicamentDAO;
+    private final LotDAO lotDAO;
     private final AlerteService alerteService;
 
     // Informations de la pharmacie (a configurer)
@@ -61,7 +64,21 @@ public class RapportService {
         this.pdfGenerator = new PDFGenerator();
         this.venteDAO = new VenteDAOImpl();
         this.medicamentDAO = new MedicamentDAOImpl();
+        this.lotDAO = new LotDAOImpl();
         this.alerteService = new AlerteService();
+
+        // Auto-configuration depuis ConfigService
+        try {
+            ConfigService configService = new ConfigService();
+            configurerPharmacie(
+                configService.getPharmacieNom(),
+                configService.getPharmacieAdresse(),
+                configService.getPharmacieTelephone(),
+                configService.getPharmacieSiret()
+            );
+        } catch (Exception e) {
+            logger.warn("Impossible de charger la configuration pharmacie, valeurs par defaut utilisees", e);
+        }
     }
 
     /**
@@ -77,6 +94,7 @@ public class RapportService {
         this.pdfGenerator = pdfGenerator;
         this.venteDAO = venteDAO;
         this.medicamentDAO = medicamentDAO;
+        this.lotDAO = new LotDAOImpl();
         this.alerteService = alerteService;
     }
 
@@ -227,7 +245,7 @@ public class RapportService {
                     ? "Rapport des ventes du " + PDFGenerator.formatDate(dateDebut)
                     : "Rapport des ventes du " + PDFGenerator.formatDate(dateDebut)
                       + " au " + PDFGenerator.formatDate(dateFin);
-            pdfGenerator.addHeader(document, titre, nomPharmacie, adressePharmacie, telephonePharmacie, siretPharmacie);
+            pdfGenerator.addHeaderWithLogo(document, titre, nomPharmacie, adressePharmacie, telephonePharmacie, siretPharmacie);
 
             // Resume
             int nombreVentes = ventes.size();
@@ -309,7 +327,7 @@ public class RapportService {
 
             Document document = pdfGenerator.createA4Document(filePath);
 
-            pdfGenerator.addHeader(document, "Alertes Stock Bas", nomPharmacie,
+            pdfGenerator.addHeaderWithLogo(document, "Alertes Stock Bas", nomPharmacie,
                     adressePharmacie, telephonePharmacie, siretPharmacie);
 
             pdfGenerator.addInfoLine(document, "Date du rapport", PDFGenerator.formatDateTime(LocalDateTime.now()));
@@ -363,7 +381,7 @@ public class RapportService {
 
             Document document = pdfGenerator.createA4Document(filePath);
 
-            pdfGenerator.addHeader(document, "Alertes Peremption Proche", nomPharmacie,
+            pdfGenerator.addHeaderWithLogo(document, "Alertes Peremption Proche", nomPharmacie,
                     adressePharmacie, telephonePharmacie, siretPharmacie);
 
             pdfGenerator.addInfoLine(document, "Date du rapport", PDFGenerator.formatDateTime(LocalDateTime.now()));
@@ -418,7 +436,7 @@ public class RapportService {
 
             Document document = pdfGenerator.createA4Document(filePath);
 
-            pdfGenerator.addHeader(document, "Lots Perimes", nomPharmacie,
+            pdfGenerator.addHeaderWithLogo(document, "Lots Perimes", nomPharmacie,
                     adressePharmacie, telephonePharmacie, siretPharmacie);
 
             pdfGenerator.addInfoLine(document, "Date du rapport", PDFGenerator.formatDateTime(LocalDateTime.now()));
@@ -480,7 +498,7 @@ public class RapportService {
 
             Document document = pdfGenerator.createA4Document(filePath);
 
-            pdfGenerator.addHeader(document, "Rapport Complet des Alertes", nomPharmacie,
+            pdfGenerator.addHeaderWithLogo(document, "Rapport Complet des Alertes", nomPharmacie,
                     adressePharmacie, telephonePharmacie, siretPharmacie);
 
             pdfGenerator.addInfoLine(document, "Date du rapport", PDFGenerator.formatDateTime(LocalDateTime.now()));
@@ -584,7 +602,7 @@ public class RapportService {
         try {
             Document document = pdfGenerator.createA4Document(filePath);
 
-            pdfGenerator.addHeader(document, "Bon de Commande N° " + commande.getIdCommande(),
+            pdfGenerator.addHeaderWithLogo(document, "Bon de Commande N° " + commande.getIdCommande(),
                     nomPharmacie, adressePharmacie, telephonePharmacie, siretPharmacie);
 
             // Informations de la commande
@@ -686,7 +704,7 @@ public class RapportService {
         try {
             Document document = pdfGenerator.createA4Document(filePath);
 
-            pdfGenerator.addHeader(document, "Predictions de Reapprovisionnement", nomPharmacie,
+            pdfGenerator.addHeaderWithLogo(document, "Predictions de Reapprovisionnement", nomPharmacie,
                     adressePharmacie, telephonePharmacie, siretPharmacie);
 
             pdfGenerator.addInfoLine(document, "Date du rapport", PDFGenerator.formatDateTime(LocalDateTime.now()));
@@ -747,6 +765,285 @@ public class RapportService {
 
         } catch (IOException e) {
             logger.error("Erreur lors de la generation du rapport predictions", e);
+            throw new ServiceException("Erreur lors de la generation du rapport", e);
+        }
+    }
+
+    // =====================================================
+    // RAPPORT STOCK COMPLET
+    // =====================================================
+
+    /**
+     * Genere un rapport du stock complet.
+     *
+     * @return le chemin du fichier PDF genere
+     * @throws ServiceException si une erreur survient
+     */
+    public String genererRapportStock() throws ServiceException {
+        String filePath = PDFGenerator.generateFilePath("rapport_stock", null);
+
+        try {
+            List<Lot> lots = lotDAO.findAll();
+
+            Document document = pdfGenerator.createA4Document(filePath);
+
+            pdfGenerator.addHeaderWithLogo(document, "Rapport de Stock Complet", nomPharmacie,
+                    adressePharmacie, telephonePharmacie, siretPharmacie);
+
+            pdfGenerator.addInfoLine(document, "Date du rapport", PDFGenerator.formatDateTime(LocalDateTime.now()));
+            pdfGenerator.addInfoLine(document, "Nombre de lots", String.valueOf(lots.size()));
+
+            document.add(new Paragraph(" "));
+
+            if (!lots.isEmpty()) {
+                float[] columnWidths = {3, 2, 2, 1, 2, 1};
+                Table table = pdfGenerator.createTable(columnWidths,
+                        "Medicament", "N° Lot", "Date peremption", "Qte", "Fournisseur", "Statut");
+
+                boolean alternate = false;
+                for (Lot lot : lots) {
+                    String nomMed = lot.getMedicament() != null
+                            ? lot.getMedicament().getNomCommercial()
+                            : "ID:" + lot.getIdMedicament();
+                    String fournisseur = lot.getFournisseur() != null
+                            ? lot.getFournisseur().getNom() : "-";
+                    String statut = lot.isPerime() ? "PERIME" :
+                            lot.isPeremptionProche() ? "Peremption proche" : "OK";
+
+                    pdfGenerator.addCell(table, nomMed, alternate);
+                    pdfGenerator.addCell(table, lot.getNumeroLot(), alternate);
+                    pdfGenerator.addCell(table, PDFGenerator.formatDate(lot.getDatePeremption()), alternate);
+                    pdfGenerator.addCellRight(table, String.valueOf(lot.getQuantiteStock()), alternate);
+                    pdfGenerator.addCell(table, fournisseur, alternate);
+                    pdfGenerator.addCell(table, statut, alternate);
+                    alternate = !alternate;
+                }
+
+                document.add(table);
+            } else {
+                pdfGenerator.addParagraph(document, "Aucun lot en stock.");
+            }
+
+            pdfGenerator.addFooter(document);
+            document.close();
+
+            logger.info("Rapport stock genere: {}", filePath);
+            return filePath;
+
+        } catch (DAOException e) {
+            logger.error("Erreur DAO lors de la generation du rapport stock", e);
+            throw new ServiceException("Erreur lors de la recuperation du stock", e);
+        } catch (IOException e) {
+            logger.error("Erreur IO lors de la generation du rapport stock", e);
+            throw new ServiceException("Erreur lors de la generation du rapport", e);
+        }
+    }
+
+    // =====================================================
+    // RAPPORT CATALOGUE MEDICAMENTS
+    // =====================================================
+
+    /**
+     * Genere un rapport du catalogue des medicaments.
+     *
+     * @return le chemin du fichier PDF genere
+     * @throws ServiceException si une erreur survient
+     */
+    public String genererRapportMedicaments() throws ServiceException {
+        String filePath = PDFGenerator.generateFilePath("catalogue_medicaments", null);
+
+        try {
+            List<Medicament> medicaments = medicamentDAO.findAll();
+
+            Document document = pdfGenerator.createA4Document(filePath);
+
+            pdfGenerator.addHeaderWithLogo(document, "Catalogue des Medicaments", nomPharmacie,
+                    adressePharmacie, telephonePharmacie, siretPharmacie);
+
+            pdfGenerator.addInfoLine(document, "Date du rapport", PDFGenerator.formatDateTime(LocalDateTime.now()));
+            pdfGenerator.addInfoLine(document, "Nombre de medicaments", String.valueOf(medicaments.size()));
+
+            document.add(new Paragraph(" "));
+
+            if (!medicaments.isEmpty()) {
+                float[] columnWidths = {3, 2, 2, 1, 1, 1};
+                Table table = pdfGenerator.createTable(columnWidths,
+                        "Nom Commercial", "Principe Actif", "Forme", "Dosage", "Prix", "Seuil Min");
+
+                boolean alternate = false;
+                for (Medicament m : medicaments) {
+                    pdfGenerator.addCell(table, m.getNomCommercial(), alternate);
+                    pdfGenerator.addCell(table, m.getPrincipeActif() != null ? m.getPrincipeActif() : "-", alternate);
+                    pdfGenerator.addCell(table, m.getFormeGalenique() != null ? m.getFormeGalenique() : "-", alternate);
+                    pdfGenerator.addCell(table, m.getDosage() != null ? m.getDosage() : "-", alternate);
+                    pdfGenerator.addCellRight(table, PDFGenerator.formatMontant(m.getPrixPublic()), alternate);
+                    pdfGenerator.addCellRight(table, String.valueOf(m.getSeuilMin()), alternate);
+                    alternate = !alternate;
+                }
+
+                document.add(table);
+            } else {
+                pdfGenerator.addParagraph(document, "Aucun medicament dans le catalogue.");
+            }
+
+            pdfGenerator.addFooter(document);
+            document.close();
+
+            logger.info("Rapport medicaments genere: {}", filePath);
+            return filePath;
+
+        } catch (DAOException e) {
+            logger.error("Erreur DAO lors de la generation du rapport medicaments", e);
+            throw new ServiceException("Erreur lors de la recuperation des medicaments", e);
+        } catch (IOException e) {
+            logger.error("Erreur IO lors de la generation du rapport medicaments", e);
+            throw new ServiceException("Erreur lors de la generation du rapport", e);
+        }
+    }
+
+    // =====================================================
+    // RAPPORT INVENTAIRE
+    // =====================================================
+
+    /**
+     * Genere un rapport d'inventaire pour une session.
+     *
+     * @param session   la session d'inventaire
+     * @param comptages la liste des comptages
+     * @return le chemin du fichier PDF genere
+     * @throws ServiceException si une erreur survient
+     */
+    public String genererRapportInventaire(SessionInventaire session,
+                                            List<ComptageInventaire> comptages) throws ServiceException {
+        String filePath = PDFGenerator.generateFilePath("inventaire",
+                String.valueOf(session.getIdSession()));
+
+        try {
+            Document document = pdfGenerator.createA4Document(filePath);
+
+            pdfGenerator.addHeaderWithLogo(document, "Rapport d'Inventaire N° " + session.getIdSession(),
+                    nomPharmacie, adressePharmacie, telephonePharmacie, siretPharmacie);
+
+            // Infos session
+            pdfGenerator.addInfoLine(document, "Date de debut", PDFGenerator.formatDateTime(session.getDateDebut()));
+            if (session.getDateFin() != null) {
+                pdfGenerator.addInfoLine(document, "Date de fin", PDFGenerator.formatDateTime(session.getDateFin()));
+            }
+            pdfGenerator.addInfoLine(document, "Statut", session.getStatut().name());
+            pdfGenerator.addInfoLine(document, "Responsable", session.getNomUtilisateur());
+            pdfGenerator.addInfoLine(document, "Nombre de comptages", String.valueOf(comptages.size()));
+
+            // Stats ecarts
+            long nbEcarts = comptages.stream().filter(ComptageInventaire::hasEcart).count();
+            long nbSurplus = comptages.stream().filter(ComptageInventaire::isSurplus).count();
+            long nbManques = comptages.stream().filter(ComptageInventaire::isManque).count();
+
+            document.add(new Paragraph(" "));
+            pdfGenerator.addBoldParagraph(document, "Resume des ecarts");
+            pdfGenerator.addInfoLine(document, "Comptages avec ecart", String.valueOf(nbEcarts));
+            pdfGenerator.addInfoLine(document, "Surplus", String.valueOf(nbSurplus));
+            pdfGenerator.addInfoLine(document, "Manques", String.valueOf(nbManques));
+
+            document.add(new Paragraph(" "));
+
+            if (!comptages.isEmpty()) {
+                pdfGenerator.addBoldParagraph(document, "Detail des comptages");
+
+                float[] columnWidths = {3, 2, 1, 1, 1, 2};
+                Table table = pdfGenerator.createTable(columnWidths,
+                        "Medicament", "N° Lot", "Theorique", "Physique", "Ecart", "Motif");
+
+                boolean alternate = false;
+                for (ComptageInventaire c : comptages) {
+                    pdfGenerator.addCell(table, c.getNomMedicament(), alternate);
+                    pdfGenerator.addCell(table, c.getNumeroLot(), alternate);
+                    pdfGenerator.addCellRight(table, String.valueOf(c.getQuantiteTheorique()), alternate);
+                    pdfGenerator.addCellRight(table, String.valueOf(c.getQuantitePhysique()), alternate);
+                    String ecartStr = c.getEcart() > 0 ? "+" + c.getEcart() : String.valueOf(c.getEcart());
+                    pdfGenerator.addCellRight(table, ecartStr, alternate);
+                    pdfGenerator.addCell(table, c.getMotifLibelle(), alternate);
+                    alternate = !alternate;
+                }
+
+                document.add(table);
+            }
+
+            if (session.getNotes() != null && !session.getNotes().isEmpty()) {
+                document.add(new Paragraph(" "));
+                pdfGenerator.addBoldParagraph(document, "Notes");
+                pdfGenerator.addParagraph(document, session.getNotes());
+            }
+
+            pdfGenerator.addFooter(document);
+            document.close();
+
+            logger.info("Rapport inventaire genere: {}", filePath);
+            return filePath;
+
+        } catch (IOException e) {
+            logger.error("Erreur lors de la generation du rapport inventaire", e);
+            throw new ServiceException("Erreur lors de la generation du rapport", e);
+        }
+    }
+
+    // =====================================================
+    // RAPPORT RETOURS
+    // =====================================================
+
+    /**
+     * Genere un rapport des retours produits.
+     *
+     * @param retours la liste des retours
+     * @return le chemin du fichier PDF genere
+     * @throws ServiceException si une erreur survient
+     */
+    public String genererRapportRetours(List<Retour> retours) throws ServiceException {
+        String filePath = PDFGenerator.generateFilePath("retours", null);
+
+        try {
+            Document document = pdfGenerator.createA4Document(filePath);
+
+            pdfGenerator.addHeaderWithLogo(document, "Rapport des Retours Produits", nomPharmacie,
+                    adressePharmacie, telephonePharmacie, siretPharmacie);
+
+            pdfGenerator.addInfoLine(document, "Date du rapport", PDFGenerator.formatDateTime(LocalDateTime.now()));
+            pdfGenerator.addInfoLine(document, "Nombre de retours", String.valueOf(retours.size()));
+
+            long reintegres = retours.stream().filter(Retour::isReintegre).count();
+            pdfGenerator.addInfoLine(document, "Reintegres au stock", String.valueOf(reintegres));
+
+            document.add(new Paragraph(" "));
+
+            if (!retours.isEmpty()) {
+                float[] columnWidths = {2, 1, 2, 2, 1, 2, 1};
+                Table table = pdfGenerator.createTable(columnWidths,
+                        "Date", "N° Vente", "Medicament", "N° Lot", "Qte", "Motif", "Reintegre");
+
+                boolean alternate = false;
+                for (Retour r : retours) {
+                    pdfGenerator.addCell(table, PDFGenerator.formatDateTime(r.getDateRetour()), alternate);
+                    pdfGenerator.addCellRight(table, String.valueOf(r.getIdVente()), alternate);
+                    pdfGenerator.addCell(table, r.getNomMedicament(), alternate);
+                    pdfGenerator.addCell(table, r.getNumeroLot(), alternate);
+                    pdfGenerator.addCellRight(table, String.valueOf(r.getQuantite()), alternate);
+                    pdfGenerator.addCell(table, r.getMotif() != null ? r.getMotif() : "-", alternate);
+                    pdfGenerator.addCell(table, r.isReintegre() ? "Oui" : "Non", alternate);
+                    alternate = !alternate;
+                }
+
+                document.add(table);
+            } else {
+                pdfGenerator.addParagraph(document, "Aucun retour enregistre.");
+            }
+
+            pdfGenerator.addFooter(document);
+            document.close();
+
+            logger.info("Rapport retours genere: {}", filePath);
+            return filePath;
+
+        } catch (IOException e) {
+            logger.error("Erreur lors de la generation du rapport retours", e);
             throw new ServiceException("Erreur lors de la generation du rapport", e);
         }
     }

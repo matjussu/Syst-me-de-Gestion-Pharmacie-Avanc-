@@ -8,10 +8,8 @@ import com.sgpa.dao.impl.MedicamentDAOImpl;
 import com.sgpa.dao.impl.VenteDAOImpl;
 import com.sgpa.exception.DAOException;
 import com.sgpa.exception.ServiceException;
-import com.sgpa.model.AuditLog;
-import com.sgpa.model.Lot;
-import com.sgpa.model.Medicament;
-import com.sgpa.model.Vente;
+import com.sgpa.dto.PredictionReapprovisionnement;
+import com.sgpa.model.*;
 import com.sgpa.utils.CSVExporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -315,6 +313,179 @@ public class ExportService {
 
         } catch (IOException e) {
             logger.error("Erreur d'ecriture du fichier CSV", e);
+            throw new ServiceException("Erreur lors de l'ecriture du fichier", e);
+        }
+    }
+
+    // =====================================================
+    // EXPORT RETOURS
+    // =====================================================
+
+    /**
+     * Exporte l'historique des retours produits.
+     *
+     * @param retours la liste des retours
+     * @return le chemin du fichier genere
+     * @throws ServiceException si une erreur survient
+     */
+    public String exportRetours(List<Retour> retours) throws ServiceException {
+        try {
+            String filePath = CSVExporter.generateFilePath("retours");
+
+            String[] headers = {
+                "N° Retour", "Date", "N° Vente", "Medicament", "N° Lot",
+                "Quantite", "Motif", "Reintegre", "Commentaire"
+            };
+
+            List<Object[]> rows = new ArrayList<>();
+            for (Retour r : retours) {
+                rows.add(new Object[]{
+                    r.getIdRetour(),
+                    r.getDateRetour(),
+                    r.getIdVente(),
+                    r.getNomMedicament(),
+                    r.getNumeroLot(),
+                    r.getQuantite(),
+                    r.getMotif() != null ? r.getMotif() : "",
+                    r.isReintegre() ? "Oui" : "Non",
+                    r.getCommentaire() != null ? r.getCommentaire() : ""
+                });
+            }
+
+            return CSVExporter.export(filePath, headers, rows);
+
+        } catch (IOException e) {
+            logger.error("Erreur d'ecriture du fichier CSV retours", e);
+            throw new ServiceException("Erreur lors de l'ecriture du fichier", e);
+        }
+    }
+
+    // =====================================================
+    // EXPORT INVENTAIRE
+    // =====================================================
+
+    /**
+     * Exporte les comptages d'une session d'inventaire.
+     *
+     * @param session   la session d'inventaire
+     * @param comptages la liste des comptages
+     * @return le chemin du fichier genere
+     * @throws ServiceException si une erreur survient
+     */
+    public String exportInventaire(SessionInventaire session,
+                                    List<ComptageInventaire> comptages) throws ServiceException {
+        try {
+            String filePath = CSVExporter.generateFilePath("inventaire_" + session.getIdSession());
+
+            String[] headers = {
+                "Medicament", "N° Lot", "Stock Theorique", "Stock Physique",
+                "Ecart", "Motif", "Commentaire"
+            };
+
+            List<Object[]> rows = new ArrayList<>();
+            for (ComptageInventaire c : comptages) {
+                rows.add(new Object[]{
+                    c.getNomMedicament(),
+                    c.getNumeroLot(),
+                    c.getQuantiteTheorique(),
+                    c.getQuantitePhysique(),
+                    c.getEcart(),
+                    c.getMotifLibelle(),
+                    c.getCommentaire() != null ? c.getCommentaire() : ""
+                });
+            }
+
+            return CSVExporter.export(filePath, headers, rows);
+
+        } catch (IOException e) {
+            logger.error("Erreur d'ecriture du fichier CSV inventaire", e);
+            throw new ServiceException("Erreur lors de l'ecriture du fichier", e);
+        }
+    }
+
+    // =====================================================
+    // EXPORT COMMANDES
+    // =====================================================
+
+    /**
+     * Exporte la liste des commandes.
+     *
+     * @param commandes la liste des commandes
+     * @return le chemin du fichier genere
+     * @throws ServiceException si une erreur survient
+     */
+    public String exportCommandes(List<Commande> commandes) throws ServiceException {
+        try {
+            String filePath = CSVExporter.generateFilePath("commandes");
+
+            String[] headers = {
+                "N° Commande", "Date Creation", "Fournisseur", "Nb Articles",
+                "Statut", "Date Reception", "Notes"
+            };
+
+            List<Object[]> rows = new ArrayList<>();
+            for (Commande c : commandes) {
+                String fournisseur = c.getFournisseur() != null
+                        ? c.getFournisseur().getNom() : "ID:" + c.getIdFournisseur();
+                rows.add(new Object[]{
+                    c.getIdCommande(),
+                    c.getDateCreation(),
+                    fournisseur,
+                    c.getNombreArticlesCommandes(),
+                    c.getStatut() != null ? c.getStatut().getLibelle() : "",
+                    c.getDateReception(),
+                    c.getNotes() != null ? c.getNotes() : ""
+                });
+            }
+
+            return CSVExporter.export(filePath, headers, rows);
+
+        } catch (IOException e) {
+            logger.error("Erreur d'ecriture du fichier CSV commandes", e);
+            throw new ServiceException("Erreur lors de l'ecriture du fichier", e);
+        }
+    }
+
+    // =====================================================
+    // EXPORT PREDICTIONS
+    // =====================================================
+
+    /**
+     * Exporte les predictions de reapprovisionnement.
+     *
+     * @param predictions la liste des predictions
+     * @return le chemin du fichier genere
+     * @throws ServiceException si une erreur survient
+     */
+    public String exportPredictions(List<PredictionReapprovisionnement> predictions) throws ServiceException {
+        try {
+            String filePath = CSVExporter.generateFilePath("predictions");
+
+            String[] headers = {
+                "Medicament", "Stock Actuel", "Stock Vendable", "Conso/Jour",
+                "Jours Restants", "Date Rupture Prevue", "Qte Suggeree",
+                "Seuil Min", "Urgence"
+            };
+
+            List<Object[]> rows = new ArrayList<>();
+            for (PredictionReapprovisionnement p : predictions) {
+                rows.add(new Object[]{
+                    p.getNomMedicament(),
+                    p.getStockActuel(),
+                    p.getStockVendable(),
+                    p.getConsommationJournaliere(),
+                    p.getJoursRestantsFormate(),
+                    p.getDateRupturePrevue(),
+                    p.getQuantiteSuggeree(),
+                    p.getSeuilMin(),
+                    p.getNiveauUrgence()
+                });
+            }
+
+            return CSVExporter.export(filePath, headers, rows);
+
+        } catch (IOException e) {
+            logger.error("Erreur d'ecriture du fichier CSV predictions", e);
             throw new ServiceException("Erreur lors de l'ecriture du fichier", e);
         }
     }

@@ -27,7 +27,7 @@
     -fx-text-secondary: #64748b;
     -fx-text-light: #94a3b8;
     -fx-border-color: transparent;
-    -fx-font-family: "Inter";
+    -fx-font-family: "Plus Jakarta Sans";
 }
 
 /* =============================================================================
@@ -50,13 +50,13 @@
     -fx-font-size: 42px;
     -fx-font-weight: bold;
     -fx-fill: #1e293b;
-    -fx-font-family: "Poppins Bold";
+    -fx-font-family: "Plus Jakarta Sans Bold";
 }
 
 .app-subtitle {
     -fx-font-size: 14px;
     -fx-fill: #64748b;
-    -fx-font-family: "Inter";
+    -fx-font-family: "Plus Jakarta Sans";
 }
 
 .login-form {
@@ -73,7 +73,7 @@
     -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-text-fill: #166534;
-    -fx-font-family: "Inter Medium";
+    -fx-font-family: "Plus Jakarta Sans Medium";
 }
 
 .input-container {
@@ -102,7 +102,7 @@
     -fx-padding: 10 12 10 5;
     -fx-text-fill: #166534;
     -fx-prompt-text-fill: #166534;
-    -fx-font-family: "Inter";
+    -fx-font-family: "Plus Jakarta Sans";
     -fx-font-size: 14px;
     -fx-focus-color: transparent;
     -fx-faint-focus-color: transparent;
@@ -137,7 +137,7 @@
     -fx-background-radius: 10;
     -fx-cursor: hand;
     -fx-effect: dropshadow(gaussian, rgba(22, 101, 52, 0.25), 8, 0, 0, 2);
-    -fx-font-family: "Inter SemiBold";
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
 }
 
 .login-button:hover {
@@ -176,7 +176,7 @@
 }
 
 .sidebar {
-    -fx-background-color: #14532d;
+    -fx-background-color: linear-gradient(to bottom, #0f2318 0%, #14532d 55%, #155e32 100%);
     -fx-min-width: 260;
     -fx-border-color: transparent;
     -fx-border-width: 0;
@@ -195,7 +195,7 @@
     -fx-fill: #ffffff;
     -fx-font-size: 22px;
     -fx-font-weight: bold;
-    -fx-font-family: "Poppins Bold";
+    -fx-font-family: "Plus Jakarta Sans Bold";
 }
 
 .sidebar .separator {
@@ -206,6 +206,13 @@
 .sidebar .separator .line {
     -fx-border-color: rgba(255, 255, 255, 0.1);
     -fx-border-width: 1 0 0 0;
+}
+
+.menu-category-label {
+    -fx-text-fill: rgba(255, 255, 255, 0.65);
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
+    -fx-font-size: 10px;
+    -fx-padding: 12 15 2 15;
 }
 
 .sidebar-scroll {
@@ -223,16 +230,16 @@
 
 .menu-button {
     -fx-background-color: transparent;
-    -fx-text-fill: rgba(255, 255, 255, 0.8);
+    -fx-text-fill: rgba(255, 255, 255, 0.75);
     -fx-font-size: 13px;
     -fx-padding: 11 15;
     -fx-background-radius: 10;
     -fx-cursor: hand;
     -fx-graphic-text-gap: 12;
-    -fx-font-family: "Inter Medium";
+    -fx-font-family: "Plus Jakarta Sans Medium";
     -fx-border-color: transparent;
-    -fx-border-width: 0 0 0 3;
-    -fx-border-radius: 0;
+    -fx-border-width: 0;
+    -fx-border-radius: 10;
 }
 
 .menu-button .ikonli-font-icon {
@@ -241,8 +248,9 @@
 }
 
 .menu-button:hover {
-    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-background-color: rgba(255, 255, 255, 0.09);
     -fx-text-fill: #ffffff;
+    -fx-background-radius: 10;
 }
 
 .menu-button:hover .ikonli-font-icon {
@@ -250,14 +258,14 @@
 }
 
 .menu-button.active {
-    -fx-background-color: rgba(255, 255, 255, 0.15);
-    -fx-text-fill: #ffffff;
-    -fx-border-color: #ffffff transparent transparent transparent;
-    -fx-border-width: 0 0 0 3;
+    -fx-background-color: linear-gradient(to right, rgba(134, 239, 172, 0.22), rgba(255, 255, 255, 0.07));
+    -fx-text-fill: #86efac;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
 }
 
 .menu-button.active .ikonli-font-icon {
-    -fx-icon-color: #ffffff;
+    -fx-icon-color: #86efac;
 }
 
 .user-section {
@@ -272,11 +280,11 @@
     -fx-text-fill: #ffffff;
     -fx-font-size: 14px;
     -fx-font-weight: bold;
-    -fx-font-family: "Inter SemiBold";
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
 }
 
 .user-role {
-    -fx-text-fill: rgba(255, 255, 255, 0.7);
+    -fx-text-fill: rgba(255, 255, 255, 0.85);
     -fx-font-size: 12px;
 }
 
@@ -325,7 +333,7 @@
     -fx-font-size: 24px;
     -fx-font-weight: bold;
     -fx-text-fill: #1e293b;
-    -fx-font-family: "Poppins SemiBold";
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
 }
 
 .page-subtitle {
@@ -337,7 +345,7 @@
     -fx-text-fill: #334155;
     -fx-font-size: 15px;
     -fx-font-weight: bold;
-    -fx-font-family: "Inter SemiBold";
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
 }
 
 .icon-button {
@@ -408,7 +416,7 @@
     -fx-font-size: 32px;
     -fx-font-weight: bold;
     -fx-text-fill: #1e293b;
-    -fx-font-family: "Poppins Bold";
+    -fx-font-family: "Plus Jakarta Sans Bold";
 }
 
 .stat-label {
@@ -459,7 +467,7 @@
     -fx-font-size: 16px;
     -fx-font-weight: bold;
     -fx-text-fill: #1e293b;
-    -fx-font-family: "Inter SemiBold";
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
 }
 
 .panel {
@@ -481,7 +489,7 @@
     -fx-font-size: 16px;
     -fx-font-weight: bold;
     -fx-text-fill: #1e293b;
-    -fx-font-family: "Inter SemiBold";
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
 }
 
 /* Panneau info vente (retours) */
@@ -522,7 +530,7 @@
     -fx-padding: 10 16;
     -fx-background-radius: 10;
     -fx-cursor: hand;
-    -fx-font-family: "Inter Medium";
+    -fx-font-family: "Plus Jakarta Sans Medium";
     -fx-border-color: #e2e8f0;
     -fx-border-width: 1;
     -fx-border-radius: 10;
@@ -635,7 +643,7 @@
     -fx-font-weight: bold;
     -fx-text-fill: #334155;
     -fx-font-size: 13px;
-    -fx-font-family: "Inter SemiBold";
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
     -fx-alignment: CENTER;
 }
 
@@ -737,7 +745,7 @@
     -fx-font-size: 14px;
     -fx-font-weight: bold;
     -fx-text-fill: #1e293b;
-    -fx-font-family: "Inter SemiBold";
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
 }
 
 .action-card-subtitle {
@@ -804,13 +812,13 @@
     -fx-font-size: 18px;
     -fx-text-fill: #1e293b;
     -fx-font-weight: bold;
-    -fx-font-family: "Inter SemiBold";
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
 }
 
 .total-value {
     -fx-font-size: 24px;
     -fx-text-fill: #166534;
-    -fx-font-family: "Poppins Bold";
+    -fx-font-family: "Plus Jakarta Sans Bold";
 }
 
 .fefo-info {
@@ -843,7 +851,7 @@
     -fx-font-size: 14px;
     -fx-text-fill: #1e293b;
     -fx-prompt-text-fill: #94a3b8;
-    -fx-font-family: "Inter";
+    -fx-font-family: "Plus Jakarta Sans";
     -fx-border-color: #e2e8f0;
     -fx-border-width: 1;
     -fx-border-radius: 8;
@@ -908,7 +916,7 @@
 
 .label {
     -fx-text-fill: #1e293b;
-    -fx-font-family: "Inter";
+    -fx-font-family: "Plus Jakarta Sans";
 }
 
 /* =============================================================================
@@ -1004,6 +1012,7 @@
     -fx-border-radius: 18;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0, 0, 2);
     -fx-max-width: 420;
+    -fx-max-height: -fx-pref-height;
 }
 
 .custom-dialog-icon {
@@ -1026,11 +1035,19 @@
     -fx-icon-color: #16a34a;
 }
 
+.custom-dialog-icon.success {
+    -fx-icon-color: #16a34a;
+}
+
+.custom-dialog-icon.danger {
+    -fx-icon-color: #ef4444;
+}
+
 .custom-dialog-title {
     -fx-font-size: 18px;
     -fx-font-weight: bold;
     -fx-text-fill: #1e293b;
-    -fx-font-family: "Poppins SemiBold";
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
 }
 
 .custom-dialog-message {
@@ -1048,7 +1065,7 @@
     -fx-padding: 10 24;
     -fx-background-radius: 10;
     -fx-cursor: hand;
-    -fx-font-family: "Inter SemiBold";
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
     -fx-effect: dropshadow(gaussian, rgba(22, 101, 52, 0.2), 6, 0, 0, 1);
 }
 
@@ -1064,7 +1081,7 @@
     -fx-padding: 10 24;
     -fx-background-radius: 10;
     -fx-cursor: hand;
-    -fx-font-family: "Inter Medium";
+    -fx-font-family: "Plus Jakarta Sans Medium";
     -fx-border-color: #e2e8f0;
     -fx-border-width: 1;
     -fx-border-radius: 10;
@@ -1083,7 +1100,7 @@
     -fx-padding: 10 24;
     -fx-background-radius: 10;
     -fx-cursor: hand;
-    -fx-font-family: "Inter SemiBold";
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
     -fx-effect: dropshadow(gaussian, rgba(239, 68, 68, 0.2), 6, 0, 0, 1);
 }
 
@@ -1218,6 +1235,68 @@
     -fx-text-fill: #16a34a;
 }
 
+.stat-badge.critical {
+    -fx-background-color: #fff7ed;
+    -fx-border-color: #fed7aa;
+}
+
+.stat-badge.critical .stat-icon-mini {
+    -fx-icon-color: #ea580c;
+}
+
+.stat-badge.critical .label {
+    -fx-text-fill: #ea580c;
+}
+
+/* ===== Summary Cards (page statistiques) ===== */
+
+.summary-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 14;
+    -fx-padding: 18;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 1;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.04), 8, 0, 0, 2);
+}
+
+.summary-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #64748b;
+    -fx-font-family: "Plus Jakarta Sans Medium";
+}
+
+.summary-value {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1e293b;
+    -fx-font-family: "Plus Jakarta Sans Bold";
+}
+
+.summary-value.primary {
+    -fx-text-fill: #166534;
+}
+
+/* Tendances KPI */
+
+.trend-label {
+    -fx-font-size: 11px;
+    -fx-font-family: "Plus Jakarta Sans Medium";
+    -fx-text-fill: #94a3b8;
+}
+
+.trend-up {
+    -fx-text-fill: #16a34a;
+}
+
+.trend-down {
+    -fx-text-fill: #ef4444;
+}
+
+.trend-neutral {
+    -fx-text-fill: #64748b;
+}
+
 /* Boutons secondaires et danger */
 .secondary-button {
     -fx-background-color: #f1f5f9;
@@ -1300,7 +1379,24 @@
     -fx-font-size: 18px;
     -fx-font-weight: bold;
     -fx-text-fill: #1e293b;
-    -fx-font-family: "Inter SemiBold";
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
+}
+
+.dialog-scroll {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.dialog-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.notes-readonly {
+    -fx-background-color: #f8fafc;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-opacity: 0.85;
 }
 
 /* =============================================================================
@@ -1315,7 +1411,7 @@
     -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-text-fill: #334155;
-    -fx-font-family: "Inter Medium";
+    -fx-font-family: "Plus Jakarta Sans Medium";
 }
 
 .form-scroll {
@@ -1338,7 +1434,7 @@
     -fx-background-radius: 8;
     -fx-font-size: 14px;
     -fx-text-fill: #1e293b;
-    -fx-font-family: "Inter";
+    -fx-font-family: "Plus Jakarta Sans";
     -fx-border-color: #e2e8f0;
     -fx-border-width: 1;
     -fx-border-radius: 8;
@@ -1580,6 +1676,13 @@
     -fx-border-radius: 10;
 }
 
+/* Panneau lateral de detail (historique des ventes) */
+.detail-side-panel {
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 0 0 0 1;
+    -fx-padding: 12;
+}
+
 .detail-header {
     -fx-font-size: 14px;
     -fx-font-weight: bold;
@@ -1630,7 +1733,7 @@
 
 .chart-title {
     -fx-text-fill: #1e293b;
-    -fx-font-family: "Inter SemiBold";
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
 }
 
 .chart-legend {
@@ -1763,7 +1866,7 @@
     -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-text-fill: #475569;
-    -fx-font-family: "Inter SemiBold";
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
 }
 
 /* Groupe de boutons filtre compact */
@@ -1800,7 +1903,7 @@
     -fx-font-size: 14px;
     -fx-font-weight: bold;
     -fx-text-fill: #1e293b;
-    -fx-font-family: "Inter SemiBold";
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
 }
 
 /* Bouton export CSV moderne */
@@ -1812,7 +1915,7 @@
     -fx-padding: 10 18;
     -fx-background-radius: 20;
     -fx-cursor: hand;
-    -fx-font-family: "Inter SemiBold";
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
     -fx-border-color: #bbf7d0;
     -fx-border-width: 1;
     -fx-border-radius: 20;
@@ -1828,6 +1931,79 @@
     -fx-icon-color: #166534;
 }
 
+/* Variantes de boutons export */
+.export-pdf {
+    -fx-background-color: #fef2f2;
+    -fx-text-fill: #991b1b;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 8 14;
+    -fx-background-radius: 18;
+    -fx-cursor: hand;
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
+    -fx-border-color: #fecaca;
+    -fx-border-width: 1;
+    -fx-border-radius: 18;
+}
+.export-pdf:hover {
+    -fx-background-color: #fee2e2;
+    -fx-border-color: #fca5a5;
+    -fx-effect: dropshadow(gaussian, rgba(153, 27, 27, 0.15), 8, 0, 0, 2);
+}
+.export-pdf .ikonli-font-icon {
+    -fx-icon-color: #991b1b;
+}
+
+.export-csv {
+    -fx-background-color: #ecfdf5;
+    -fx-text-fill: #166534;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 8 14;
+    -fx-background-radius: 18;
+    -fx-cursor: hand;
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
+    -fx-border-color: #bbf7d0;
+    -fx-border-width: 1;
+    -fx-border-radius: 18;
+}
+.export-csv:hover {
+    -fx-background-color: #d1fae5;
+    -fx-border-color: #86efac;
+    -fx-effect: dropshadow(gaussian, rgba(22, 101, 52, 0.15), 8, 0, 0, 2);
+}
+.export-csv .ikonli-font-icon {
+    -fx-icon-color: #166534;
+}
+
+.export-excel {
+    -fx-background-color: #f0fdf4;
+    -fx-text-fill: #14532d;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 8 14;
+    -fx-background-radius: 18;
+    -fx-cursor: hand;
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
+    -fx-border-color: #86efac;
+    -fx-border-width: 1;
+    -fx-border-radius: 18;
+}
+.export-excel:hover {
+    -fx-background-color: #dcfce7;
+    -fx-border-color: #4ade80;
+    -fx-effect: dropshadow(gaussian, rgba(20, 83, 45, 0.15), 8, 0, 0, 2);
+}
+.export-excel .ikonli-font-icon {
+    -fx-icon-color: #14532d;
+}
+
+/* Groupe de boutons export */
+.export-group {
+    -fx-spacing: 6;
+    -fx-alignment: CENTER_LEFT;
+}
+
 /* Tableau modernise */
 .table-view .column-header {
     -fx-alignment: CENTER;
@@ -1840,4 +2016,288 @@
 
 .table-view .table-row-cell:hover {
     -fx-background-color: #f0fdf4;
+}
+
+/* =============================================================================
+   INVENTAIRE - Styles specifiques
+   ============================================================================= */
+
+/* Value text (utilise dans les formulaires d'inventaire et autres) */
+.value-text {
+    -fx-font-size: 14px;
+    -fx-text-fill: #1e293b;
+    -fx-font-family: "Plus Jakarta Sans Medium";
+}
+
+.value-text-large {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1e293b;
+    -fx-font-family: "Plus Jakarta Sans Bold";
+}
+
+/* Mini-timeline des etapes */
+.inventaire-steps {
+    -fx-padding: 8 12;
+    -fx-background-color: #f0fdf4;
+    -fx-background-radius: 8;
+    -fx-border-color: #bbf7d0;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+}
+
+.step-item {
+    -fx-padding: 2 0;
+}
+
+.step-icon {
+    -fx-icon-color: #166534;
+}
+
+.step-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #166534;
+    -fx-font-family: "Plus Jakarta Sans Medium";
+}
+
+.step-arrow {
+    -fx-icon-color: #86efac;
+}
+
+/* Barre de progression inventaire */
+.inventaire-progress {
+    -fx-accent: #16a34a;
+    -fx-background-radius: 3;
+}
+
+.inventaire-progress .bar {
+    -fx-background-color: linear-gradient(to right, #16a34a, #22c55e);
+    -fx-background-radius: 3;
+    -fx-background-insets: 0;
+}
+
+.inventaire-progress .track {
+    -fx-background-color: #e2e8f0;
+    -fx-background-radius: 3;
+    -fx-background-insets: 0;
+}
+
+/* Placeholder icon */
+.placeholder-icon {
+    -fx-icon-color: #cbd5e1;
+}
+
+/* Toggle buttons pour les filtres */
+.filter-toggle {
+    -fx-background-color: #f1f5f9;
+    -fx-text-fill: #64748b;
+    -fx-font-size: 12px;
+    -fx-padding: 5 12;
+    -fx-background-radius: 15;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 1;
+    -fx-border-radius: 15;
+    -fx-cursor: hand;
+    -fx-font-family: "Plus Jakarta Sans Medium";
+}
+
+.filter-toggle:hover {
+    -fx-background-color: #e2e8f0;
+}
+
+.filter-toggle:selected {
+    -fx-background-color: #166534;
+    -fx-text-fill: white;
+    -fx-border-color: #166534;
+}
+
+/* TitledPane pour l'historique */
+.inventaire-historique-pane {
+    -fx-font-size: 14px;
+    -fx-font-family: "Plus Jakarta Sans Medium";
+}
+
+.inventaire-historique-pane > .title {
+    -fx-background-color: #f8fafc;
+    -fx-background-radius: 10;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+    -fx-padding: 8 12;
+}
+
+.inventaire-historique-pane > .title:hover {
+    -fx-background-color: #f1f5f9;
+}
+
+.inventaire-historique-pane > .title > .arrow-button .arrow {
+    -fx-background-color: #64748b;
+}
+
+.inventaire-historique-pane > .content {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 8 0 0 0;
+}
+
+/* ScrollPane transparent pour le formulaire de comptage */
+.comptage-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0;
+}
+
+.comptage-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.comptage-scroll .scroll-bar:vertical {
+    -fx-pref-width: 6;
+    -fx-background-color: transparent;
+}
+
+.comptage-scroll .scroll-bar:vertical .thumb {
+    -fx-background-color: #cbd5e1;
+    -fx-background-radius: 3;
+}
+
+.comptage-scroll .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #94a3b8;
+}
+
+.comptage-scroll .scroll-bar:vertical .track {
+    -fx-background-color: transparent;
+}
+
+.comptage-scroll .scroll-bar:vertical .increment-button,
+.comptage-scroll .scroll-bar:vertical .decrement-button {
+    -fx-pref-height: 0;
+    -fx-padding: 0;
+}
+
+.comptage-scroll-content {
+    -fx-padding: 0 4 0 0;
+}
+
+/* =============================================================================
+   ALERTES - Styles specifiques
+   ============================================================================= */
+
+/* Barre de progression stock bas - niveau faible (rouge) */
+.stock-progress-low .bar {
+    -fx-background-color: linear-gradient(to right, #dc2626, #ef4444);
+    -fx-background-radius: 3;
+    -fx-background-insets: 0;
+}
+
+.stock-progress-low .track {
+    -fx-background-color: #fee2e2;
+    -fx-background-radius: 3;
+    -fx-background-insets: 0;
+}
+
+/* Barre de progression stock bas - niveau moyen (ambre) */
+.stock-progress-medium .bar {
+    -fx-background-color: linear-gradient(to right, #f59e0b, #fbbf24);
+    -fx-background-radius: 3;
+    -fx-background-insets: 0;
+}
+
+.stock-progress-medium .track {
+    -fx-background-color: #fef3c7;
+    -fx-background-radius: 3;
+    -fx-background-insets: 0;
+}
+
+/* Coloration des lignes de table par urgence */
+.alert-row-critique {
+    -fx-background-color: #fef2f2;
+}
+
+.alert-row-critique:selected {
+    -fx-background-color: #fecaca;
+}
+
+.alert-row-urgent {
+    -fx-background-color: #fff7ed;
+}
+
+.alert-row-urgent:selected {
+    -fx-background-color: #fed7aa;
+}
+
+.alert-row-attention {
+    -fx-background-color: #fffbeb;
+}
+
+.alert-row-attention:selected {
+    -fx-background-color: #fef3c7;
+}
+
+.alert-row-perime {
+    -fx-background-color: #fef2f2;
+    -fx-border-color: #fecaca;
+    -fx-border-width: 0 0 0 3;
+}
+
+.alert-row-perime:selected {
+    -fx-background-color: #fee2e2;
+}
+
+/* Bouton Commander dans les cellules de table */
+.commander-button {
+    -fx-background-color: #166534;
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-padding: 4 10;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-font-family: "Plus Jakarta Sans Medium";
+}
+
+.commander-button:hover {
+    -fx-background-color: #15803d;
+    -fx-effect: dropshadow(gaussian, rgba(22, 101, 52, 0.2), 4, 0, 0, 1);
+}
+
+/* Badges d'urgence (pilules colorees) */
+.urgence-badge {
+    -fx-padding: 3 8;
+    -fx-background-radius: 10;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
+}
+
+.urgence-critique {
+    -fx-background-color: #fef2f2;
+    -fx-text-fill: #dc2626;
+    -fx-border-color: #fecaca;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+}
+
+.urgence-urgent {
+    -fx-background-color: #fff7ed;
+    -fx-text-fill: #ea580c;
+    -fx-border-color: #fed7aa;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+}
+
+.urgence-attention {
+    -fx-background-color: #fffbeb;
+    -fx-text-fill: #d97706;
+    -fx-border-color: #fde68a;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+}
+
+.urgence-perime {
+    -fx-background-color: #fef2f2;
+    -fx-text-fill: #dc2626;
+    -fx-border-color: #fecaca;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
 }

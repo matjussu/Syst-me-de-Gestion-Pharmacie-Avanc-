@@ -52,7 +52,7 @@
                         <graphic><FontIcon iconLiteral="fas-undo-alt"/></graphic>
                     </Button>
 
-                    <Separator/>
+                    <Label text="PRODUITS" styleClass="menu-category-label" style="-fx-text-fill: rgba(255,255,255,0.60); -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 12 15 2 15;"/>
 
                     <Button fx:id="btnProduitsStock" text="Produits &amp; Stock" onAction="#showProduitsStock"
                             styleClass="menu-button" maxWidth="Infinity" alignment="CENTER_LEFT">
@@ -69,7 +69,7 @@
                         <graphic><FontIcon iconLiteral="fas-truck"/></graphic>
                     </Button>
 
-                    <Separator/>
+                    <Label text="ANALYSES" styleClass="menu-category-label" style="-fx-text-fill: rgba(255,255,255,0.60); -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 12 15 2 15;"/>
 
                     <Button fx:id="btnAlertes" text="Alertes" onAction="#showAlertes"
                             styleClass="menu-button" maxWidth="Infinity" alignment="CENTER_LEFT">
@@ -86,7 +86,7 @@
                         <graphic><FontIcon iconLiteral="fas-chart-line"/></graphic>
                     </Button>
 
-                    <Separator/>
+                    <Label text="ADMINISTRATION" styleClass="menu-category-label" style="-fx-text-fill: rgba(255,255,255,0.60); -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 12 15 2 15;"/>
 
                     <!-- Section Administration (visible seulement pour les pharmaciens) -->
                     <Button fx:id="btnUtilisateurs" text="Utilisateurs" onAction="#showUtilisateurs"
@@ -117,8 +117,8 @@
                 <HBox alignment="CENTER_LEFT" spacing="10">
                     <FontIcon iconLiteral="fas-user-circle" iconSize="24" styleClass="user-icon"/>
                     <VBox>
-                        <Label fx:id="lblUserName" text="Utilisateur" styleClass="user-name"/>
-                        <Label fx:id="lblUserRole" text="Role" styleClass="user-role"/>
+                        <Label fx:id="lblUserName" text="Utilisateur" styleClass="user-name" style="-fx-text-fill: white;"/>
+                        <Label fx:id="lblUserRole" text="Role" styleClass="user-role" style="-fx-text-fill: rgba(255,255,255,0.80);"/>
                     </VBox>
                 </HBox>
                 <Button text="Deconnexion" onAction="#handleLogout"

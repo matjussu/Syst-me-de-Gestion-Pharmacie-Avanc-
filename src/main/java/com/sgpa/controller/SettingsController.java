@@ -50,6 +50,13 @@ public class SettingsController extends BaseController {
         this.configService = new ConfigService();
     }
 
+    @Override
+    protected void onUserSet() {
+        if (currentUser == null || !currentUser.isAdmin()) {
+            logger.warn("Acces non autorise aux parametres");
+        }
+    }
+
     @FXML
     public void initialize() {
         setupControls();
@@ -136,41 +143,33 @@ public class SettingsController extends BaseController {
             lblStatus.setText("Configuration enregistree avec succes!");
             lblStatus.setStyle("-fx-text-fill: #28a745;");
 
-            showAlert(Alert.AlertType.INFORMATION, "Succes",
-                    "La configuration a ete enregistree.\n" +
-                            "Certains changements prendront effet au prochain demarrage.");
+            showSuccess("Succes", "La configuration a ete enregistree.\n" +
+                    "Certains changements prendront effet au prochain demarrage.");
 
         } catch (IOException e) {
             logger.error("Erreur lors de la sauvegarde de la configuration", e);
             lblStatus.setText("Erreur lors de la sauvegarde");
             lblStatus.setStyle("-fx-text-fill: #dc3545;");
 
-            showAlert(Alert.AlertType.ERROR, "Erreur",
-                    "Impossible d'enregistrer la configuration: " + e.getMessage());
+            showError("Erreur", "Impossible d'enregistrer la configuration: " + e.getMessage());
         }
     }
 
     @FXML
     private void handleReset() {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Reinitialiser la configuration");
-        confirm.setHeaderText("Reinitialiser aux valeurs par defaut?");
-        confirm.setContentText("Cette action va restaurer tous les parametres a leurs valeurs par defaut.");
-
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                try {
-                    configService.resetToDefaults();
-                    loadSettings();
-                    lblStatus.setText("Configuration reinitialisee");
-                    lblStatus.setStyle("-fx-text-fill: #17a2b8;");
-                } catch (IOException e) {
-                    logger.error("Erreur lors de la reinitialisation", e);
-                    showAlert(Alert.AlertType.ERROR, "Erreur",
-                            "Impossible de reinitialiser: " + e.getMessage());
-                }
-            }
-        });
+        showDangerConfirmation("Reinitialiser la configuration?",
+                "Cette action va restaurer tous les parametres a leurs valeurs par defaut.",
+                () -> {
+                    try {
+                        configService.resetToDefaults();
+                        loadSettings();
+                        lblStatus.setText("Configuration reinitialisee");
+                        lblStatus.setStyle("-fx-text-fill: #17a2b8;");
+                    } catch (IOException e) {
+                        logger.error("Erreur lors de la reinitialisation", e);
+                        showError("Erreur", "Impossible de reinitialiser: " + e.getMessage());
+                    }
+                });
     }
 
     @FXML
@@ -211,11 +210,4 @@ public class SettingsController extends BaseController {
         }
     }
 
-    private void showAlert(Alert.AlertType type, String title, String message) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
 }

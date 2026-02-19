@@ -80,6 +80,13 @@ public class UtilisateurController extends BaseController {
         this.utilisateurService = new UtilisateurService();
     }
 
+    @Override
+    protected void onUserSet() {
+        if (currentUser == null || !currentUser.isAdmin()) {
+            logger.warn("Acces non autorise a la gestion des utilisateurs");
+        }
+    }
+
     @FXML
     public void initialize() {
         setupTable();
@@ -194,7 +201,7 @@ public class UtilisateurController extends BaseController {
             @Override
             protected void failed() {
                 logger.error("Erreur chargement utilisateurs", getException());
-                showAlert(Alert.AlertType.ERROR, "Erreur",
+                showError( "Erreur",
                         "Impossible de charger les utilisateurs: " + getException().getMessage());
             }
         };
@@ -336,15 +343,15 @@ public class UtilisateurController extends BaseController {
     private void handleSave() {
         // Validation commune
         if (txtNomUtilisateur.getText().trim().isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Validation", "Le nom d'utilisateur est obligatoire.");
+            showWarning( "Validation", "Le nom d'utilisateur est obligatoire.");
             return;
         }
         if (txtNomComplet.getText().trim().isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Validation", "Le nom complet est obligatoire.");
+            showWarning( "Validation", "Le nom complet est obligatoire.");
             return;
         }
         if (comboRole.getValue() == null) {
-            showAlert(Alert.AlertType.WARNING, "Validation", "Veuillez selectionner un role.");
+            showWarning( "Validation", "Veuillez selectionner un role.");
             return;
         }
 
@@ -361,12 +368,12 @@ public class UtilisateurController extends BaseController {
         String confirmPassword = txtConfirmMotDePasse.getText();
 
         if (password.length() < 4) {
-            showAlert(Alert.AlertType.WARNING, "Validation",
+            showWarning( "Validation",
                     "Le mot de passe doit contenir au moins 4 caracteres.");
             return;
         }
         if (!password.equals(confirmPassword)) {
-            showAlert(Alert.AlertType.WARNING, "Validation",
+            showWarning( "Validation",
                     "Les mots de passe ne correspondent pas.");
             return;
         }
@@ -388,7 +395,7 @@ public class UtilisateurController extends BaseController {
 
             @Override
             protected void succeeded() {
-                showAlert(Alert.AlertType.INFORMATION, "Succes", "Utilisateur cree avec succes.");
+                showSuccess( "Succes", "Utilisateur cree avec succes.");
                 loadData();
                 resetForm();
             }
@@ -396,7 +403,7 @@ public class UtilisateurController extends BaseController {
             @Override
             protected void failed() {
                 logger.error("Erreur creation utilisateur", getException());
-                showAlert(Alert.AlertType.ERROR, "Erreur", getException().getMessage());
+                showError( "Erreur", getException().getMessage());
             }
         };
         runAsync(task);
@@ -409,12 +416,12 @@ public class UtilisateurController extends BaseController {
             String confirmNewPassword = txtConfirmNewPassword.getText();
 
             if (newPassword.length() < 4) {
-                showAlert(Alert.AlertType.WARNING, "Validation",
+                showWarning( "Validation",
                         "Le nouveau mot de passe doit contenir au moins 4 caracteres.");
                 return;
             }
             if (!newPassword.equals(confirmNewPassword)) {
-                showAlert(Alert.AlertType.WARNING, "Validation",
+                showWarning( "Validation",
                         "Les nouveaux mots de passe ne correspondent pas.");
                 return;
             }
@@ -442,7 +449,7 @@ public class UtilisateurController extends BaseController {
 
             @Override
             protected void succeeded() {
-                showAlert(Alert.AlertType.INFORMATION, "Succes", "Utilisateur modifie avec succes.");
+                showSuccess( "Succes", "Utilisateur modifie avec succes.");
                 loadData();
                 resetForm();
             }
@@ -450,7 +457,7 @@ public class UtilisateurController extends BaseController {
             @Override
             protected void failed() {
                 logger.error("Erreur modification utilisateur", getException());
-                showAlert(Alert.AlertType.ERROR, "Erreur", getException().getMessage());
+                showError( "Erreur", getException().getMessage());
             }
         };
         runAsync(task);
@@ -463,86 +470,69 @@ public class UtilisateurController extends BaseController {
         boolean newStatus = !selectedUtilisateur.isActif();
         String action = newStatus ? "activer" : "desactiver";
 
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Confirmation");
-        confirm.setHeaderText(action.substring(0, 1).toUpperCase() + action.substring(1) + " l'utilisateur?");
-        confirm.setContentText("Voulez-vous vraiment " + action + " \"" +
-                selectedUtilisateur.getNomComplet() + "\"?");
+        showDangerConfirmation(
+                action.substring(0, 1).toUpperCase() + action.substring(1) + " l'utilisateur?",
+                "Voulez-vous vraiment " + action + " \"" + selectedUtilisateur.getNomComplet() + "\"?",
+                () -> {
+                    Task<Void> task = new Task<>() {
+                        @Override
+                        protected Void call() throws Exception {
+                            utilisateurService.setActif(selectedUtilisateur.getIdUtilisateur(), newStatus);
+                            return null;
+                        }
 
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                Task<Void> task = new Task<>() {
-                    @Override
-                    protected Void call() throws Exception {
-                        utilisateurService.setActif(selectedUtilisateur.getIdUtilisateur(), newStatus);
-                        return null;
-                    }
+                        @Override
+                        protected void succeeded() {
+                            showSuccess("Succes",
+                                    "Utilisateur " + (newStatus ? "active" : "desactive") + ".");
+                            loadData();
+                            resetForm();
+                        }
 
-                    @Override
-                    protected void succeeded() {
-                        showAlert(Alert.AlertType.INFORMATION, "Succes",
-                                "Utilisateur " + (newStatus ? "active" : "desactive") + ".");
-                        loadData();
-                        resetForm();
-                    }
-
-                    @Override
-                    protected void failed() {
-                        logger.error("Erreur changement statut", getException());
-                        showAlert(Alert.AlertType.ERROR, "Erreur", getException().getMessage());
-                    }
-                };
-                runAsync(task);
-            }
-        });
+                        @Override
+                        protected void failed() {
+                            logger.error("Erreur changement statut", getException());
+                            showError("Erreur", getException().getMessage());
+                        }
+                    };
+                    runAsync(task);
+                });
     }
 
     @FXML
     private void handleDelete() {
         if (selectedUtilisateur == null) return;
 
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Confirmation");
-        confirm.setHeaderText("Supprimer l'utilisateur?");
-        confirm.setContentText("Voulez-vous vraiment supprimer \"" +
-                selectedUtilisateur.getNomComplet() + "\"?\n\n" +
-                "Attention: cette action est irreversible.\n" +
-                "Si l'utilisateur a effectue des ventes, la suppression sera impossible.");
+        showDangerConfirmation("Supprimer l'utilisateur?",
+                "Voulez-vous vraiment supprimer \"" +
+                        selectedUtilisateur.getNomComplet() + "\"?\n\n" +
+                        "Attention: cette action est irreversible.\n" +
+                        "Si l'utilisateur a effectue des ventes, la suppression sera impossible.",
+                () -> {
+                    Task<Void> task = new Task<>() {
+                        @Override
+                        protected Void call() throws Exception {
+                            utilisateurService.supprimerUtilisateur(selectedUtilisateur.getIdUtilisateur());
+                            return null;
+                        }
 
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                Task<Void> task = new Task<>() {
-                    @Override
-                    protected Void call() throws Exception {
-                        utilisateurService.supprimerUtilisateur(selectedUtilisateur.getIdUtilisateur());
-                        return null;
-                    }
+                        @Override
+                        protected void succeeded() {
+                            showSuccess("Succes", "Utilisateur supprime.");
+                            loadData();
+                            resetForm();
+                        }
 
-                    @Override
-                    protected void succeeded() {
-                        showAlert(Alert.AlertType.INFORMATION, "Succes", "Utilisateur supprime.");
-                        loadData();
-                        resetForm();
-                    }
-
-                    @Override
-                    protected void failed() {
-                        logger.error("Erreur suppression utilisateur", getException());
-                        showAlert(Alert.AlertType.ERROR, "Erreur",
-                                "Impossible de supprimer cet utilisateur.\n" +
-                                "Il est peut-etre reference dans des ventes.");
-                    }
-                };
-                runAsync(task);
-            }
-        });
+                        @Override
+                        protected void failed() {
+                            logger.error("Erreur suppression utilisateur", getException());
+                            showError("Erreur",
+                                    "Impossible de supprimer cet utilisateur.\n" +
+                                    "Il est peut-etre reference dans des ventes.");
+                        }
+                    };
+                    runAsync(task);
+                });
     }
 
-    private void showAlert(Alert.AlertType type, String title, String message) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
 }

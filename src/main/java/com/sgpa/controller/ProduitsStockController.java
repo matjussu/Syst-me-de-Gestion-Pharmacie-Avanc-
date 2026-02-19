@@ -129,6 +129,13 @@ public class ProduitsStockController extends BaseController {
     @FXML private TableColumn<Commande, String> colCmdStatut;
     @FXML private TableColumn<Commande, String> colCmdFournisseur;
 
+    // Boutons d'actions (controle d'acces par role)
+    @FXML private Button btnNewMedicament;
+    @FXML private Button btnAddLot;
+    @FXML private Button btnExportCSV;
+    @FXML private Button btnSaveMedicament;
+    @FXML private Button btnAddLotToSelected;
+
     // Dialog ajout lot
     @FXML private VBox addLotDialog;
     @FXML private ComboBox<Medicament> comboMedicament;
@@ -212,8 +219,60 @@ public class ProduitsStockController extends BaseController {
     }
 
     @Override
+    protected void onUserSet() {
+        configureAccessByRole();
+    }
+
+    @Override
     public void onViewDisplayed() {
         handleRefresh();
+    }
+
+    private void configureAccessByRole() {
+        boolean isAdmin = currentUser != null && currentUser.isAdmin();
+
+        // Masquer les boutons d'ecriture pour le PREPARATEUR
+        if (btnNewMedicament != null) {
+            btnNewMedicament.setVisible(isAdmin);
+            btnNewMedicament.setManaged(isAdmin);
+        }
+        if (btnAddLot != null) {
+            btnAddLot.setVisible(isAdmin);
+            btnAddLot.setManaged(isAdmin);
+        }
+        if (btnExportCSV != null) {
+            btnExportCSV.setVisible(isAdmin);
+            btnExportCSV.setManaged(isAdmin);
+        }
+        if (btnSaveMedicament != null) {
+            btnSaveMedicament.setVisible(isAdmin);
+            btnSaveMedicament.setManaged(isAdmin);
+        }
+        if (btnAddLotToSelected != null) {
+            btnAddLotToSelected.setVisible(isAdmin);
+            btnAddLotToSelected.setManaged(isAdmin);
+        }
+        if (btnDelete != null && !isAdmin) {
+            btnDelete.setVisible(false);
+            btnDelete.setManaged(false);
+        }
+        if (btnCommanderCeProduit != null) {
+            btnCommanderCeProduit.setVisible(isAdmin);
+            btnCommanderCeProduit.setManaged(isAdmin);
+        }
+
+        // Rendre les champs du formulaire en lecture seule pour le PREPARATEUR
+        if (!isAdmin) {
+            txtNomCommercial.setEditable(false);
+            txtPrincipeActif.setEditable(false);
+            comboForme.setDisable(true);
+            txtDosage.setEditable(false);
+            txtPrix.setEditable(false);
+            spinnerSeuil.setDisable(true);
+            txtDescription.setEditable(false);
+            chkOrdonnance.setDisable(true);
+            chkActif.setDisable(true);
+        }
     }
 
     // === Debounce recherche ===

@@ -2,6 +2,9 @@ package com.sgpa.controller;
 
 import com.sgpa.dao.impl.MedicamentDAOImpl;
 import com.sgpa.model.Medicament;
+import com.sgpa.service.ExcelExportService;
+import com.sgpa.service.ExportService;
+import com.sgpa.service.RapportService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -56,6 +59,9 @@ public class MedicamentController extends BaseController {
     @FXML private Button btnSave;
 
     private final MedicamentDAOImpl medicamentDAO;
+    private final RapportService rapportService;
+    private final ExportService exportService;
+    private final ExcelExportService excelExportService;
     private final ObservableList<Medicament> medicamentData = FXCollections.observableArrayList();
 
     private Medicament selectedMedicament;
@@ -63,6 +69,9 @@ public class MedicamentController extends BaseController {
 
     public MedicamentController() {
         this.medicamentDAO = new MedicamentDAOImpl();
+        this.rapportService = new RapportService();
+        this.exportService = new ExportService();
+        this.excelExportService = new ExcelExportService();
     }
 
     @FXML
@@ -250,11 +259,11 @@ public class MedicamentController extends BaseController {
     private void handleSave() {
         // Validation
         if (txtNomCommercial.getText().trim().isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Validation", "Le nom commercial est obligatoire.");
+            showWarning("Validation", "Le nom commercial est obligatoire.");
             return;
         }
         if (txtPrincipeActif.getText().trim().isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Validation", "Le principe actif est obligatoire.");
+            showWarning("Validation", "Le principe actif est obligatoire.");
             return;
         }
 
@@ -265,7 +274,7 @@ public class MedicamentController extends BaseController {
                 throw new NumberFormatException("Prix negatif");
             }
         } catch (Exception e) {
-            showAlert(Alert.AlertType.WARNING, "Validation", "Le prix doit etre un nombre positif.");
+            showWarning("Validation", "Le prix doit etre un nombre positif.");
             return;
         }
 
@@ -294,7 +303,7 @@ public class MedicamentController extends BaseController {
             @Override
             protected void succeeded() {
                 String message = isEditMode ? "Medicament modifie avec succes." : "Medicament cree avec succes.";
-                showAlert(Alert.AlertType.INFORMATION, "Succes", message);
+                showSuccess("Succes", message);
                 loadData();
                 resetForm();
             }
@@ -302,7 +311,7 @@ public class MedicamentController extends BaseController {
             @Override
             protected void failed() {
                 logger.error("Erreur sauvegarde medicament", getException());
-                showAlert(Alert.AlertType.ERROR, "Erreur", "Impossible de sauvegarder: " + getException().getMessage());
+                showError("Erreur", "Impossible de sauvegarder: " + getException().getMessage());
             }
         };
         runAsync(task);
@@ -312,45 +321,48 @@ public class MedicamentController extends BaseController {
     private void handleDelete() {
         if (selectedMedicament == null) return;
 
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Confirmation");
-        confirm.setHeaderText("Supprimer le medicament?");
-        confirm.setContentText("Voulez-vous vraiment supprimer \"" + selectedMedicament.getNomCommercial() + "\"?\n\n" +
-                "Attention: cette action est irreversible et supprimera egalement tous les lots associes.");
+        showDangerConfirmation("Supprimer le medicament?",
+                "Voulez-vous vraiment supprimer \"" + selectedMedicament.getNomCommercial() + "\"?\n\n" +
+                "Attention: cette action est irreversible et supprimera egalement tous les lots associes.",
+                () -> {
+                    Task<Void> task = new Task<>() {
+                        @Override
+                        protected Void call() throws Exception {
+                            medicamentDAO.delete(selectedMedicament.getIdMedicament());
+                            return null;
+                        }
 
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                Task<Void> task = new Task<>() {
-                    @Override
-                    protected Void call() throws Exception {
-                        medicamentDAO.delete(selectedMedicament.getIdMedicament());
-                        return null;
-                    }
+                        @Override
+                        protected void succeeded() {
+                            showSuccess("Succes", "Medicament supprime.");
+                            loadData();
+                            resetForm();
+                        }
 
-                    @Override
-                    protected void succeeded() {
-                        showAlert(Alert.AlertType.INFORMATION, "Succes", "Medicament supprime.");
-                        loadData();
-                        resetForm();
-                    }
-
-                    @Override
-                    protected void failed() {
-                        logger.error("Erreur suppression medicament", getException());
-                        showAlert(Alert.AlertType.ERROR, "Erreur",
-                                "Impossible de supprimer ce medicament. Il est peut-etre utilise dans des ventes.");
-                    }
-                };
-                runAsync(task);
-            }
-        });
+                        @Override
+                        protected void failed() {
+                            logger.error("Erreur suppression medicament", getException());
+                            showError("Erreur",
+                                    "Impossible de supprimer ce medicament. Il est peut-etre utilise dans des ventes.");
+                        }
+                    };
+                    runAsync(task);
+                });
     }
 
-    private void showAlert(Alert.AlertType type, String title, String message) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+    @FXML
+    private void handleExportPDF() {
+        executeExport(() -> rapportService.genererRapportMedicaments(), "Export PDF Medicaments", true);
     }
+
+    @FXML
+    private void handleExportCSV() {
+        executeExport(() -> exportService.exportMedicaments(), "Export CSV Medicaments", true);
+    }
+
+    @FXML
+    private void handleExportExcel() {
+        executeExport(() -> excelExportService.exportMedicaments(), "Export Excel Medicaments", true);
+    }
+
 }

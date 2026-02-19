@@ -214,11 +214,25 @@ public class PredictionReapprovisionnement {
     }
 
     /**
+     * Retourne un ordre numerique pour le tri par urgence.
+     * Plus le nombre est petit, plus c'est urgent.
+     */
+    public int getOrdreUrgence() {
+        return switch (niveauUrgence) {
+            case NIVEAU_RUPTURE -> 0;
+            case NIVEAU_CRITIQUE -> 1;
+            case NIVEAU_URGENT -> 2;
+            case NIVEAU_ATTENTION -> 3;
+            default -> 4;
+        };
+    }
+
+    /**
      * Retourne une description formatee des jours restants.
      */
     public String getJoursRestantsFormate() {
-        if (joursAvantRupture == Integer.MAX_VALUE) {
-            return "N/A";
+        if (consommationJournaliere <= 0) {
+            return "Aucune vente";
         } else if (joursAvantRupture <= 0) {
             return "RUPTURE";
         } else if (joursAvantRupture == 1) {

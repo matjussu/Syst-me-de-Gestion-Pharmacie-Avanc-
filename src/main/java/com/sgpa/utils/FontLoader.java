@@ -10,12 +10,10 @@ public class FontLoader {
 
     public static void loadFonts() {
         String[] fonts = {
-            "/fonts/Inter-Regular.ttf",
-            "/fonts/Inter-Medium.ttf",
-            "/fonts/Inter-SemiBold.ttf",
-            "/fonts/Inter-Bold.ttf",
-            "/fonts/Poppins-SemiBold.ttf",
-            "/fonts/Poppins-Bold.ttf"
+            "/fonts/PlusJakartaSans-Regular.ttf",
+            "/fonts/PlusJakartaSans-Medium.ttf",
+            "/fonts/PlusJakartaSans-SemiBold.ttf",
+            "/fonts/PlusJakartaSans-Bold.ttf"
         };
 
         for (String fontPath : fonts) {

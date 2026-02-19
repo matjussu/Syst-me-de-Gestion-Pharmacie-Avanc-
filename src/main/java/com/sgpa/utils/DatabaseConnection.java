@@ -12,7 +12,8 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 /**
- * Gestionnaire de connexion a la base de donnees avec pool de connexions HikariCP.
+ * Gestionnaire de connexion a la base de donnees avec pool de connexions
+ * HikariCP.
  * <p>
  * Implementation du pattern Singleton pour garantir une instance unique
  * du pool de connexions dans toute l'application.
@@ -23,6 +24,7 @@ import java.util.Properties;
  * </p>
  *
  * <h3>Utilisation :</h3>
+ * 
  * <pre>{@code
  * try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
  *     // Utiliser la connexion
@@ -84,7 +86,8 @@ public class DatabaseConnection {
     /**
      * Obtient une connexion depuis le pool.
      * <p>
-     * La connexion doit etre fermee apres utilisation (idealement avec try-with-resources)
+     * La connexion doit etre fermee apres utilisation (idealement avec
+     * try-with-resources)
      * pour etre retournee au pool.
      * </p>
      *
@@ -139,18 +142,37 @@ public class DatabaseConnection {
 
     /**
      * Charge les proprietes depuis le fichier de configuration.
+     * Cherche d'abord un fichier externe "database.properties" dans le dossier
+     * courant.
+     * Sinon, charge le fichier depuis le classpath (interne au JAR).
      *
      * @return les proprietes chargees
-     * @throws IOException si le fichier n'est pas trouve
+     * @throws IOException si aucun fichier n'est trouve
      */
     private Properties loadProperties() throws IOException {
         Properties props = new Properties();
+
+        // 1. Essayer de charger depuis un fichier externe (ex: meme dossier que le JAR)
+        java.nio.file.Path externalConfig = java.nio.file.Paths.get(CONFIG_FILE);
+        if (java.nio.file.Files.exists(externalConfig)) {
+            try (InputStream is = java.nio.file.Files.newInputStream(externalConfig)) {
+                props.load(is);
+                logger.info("Configuration chargee depuis le fichier externe: {}", externalConfig.toAbsolutePath());
+                return props;
+            } catch (IOException e) {
+                logger.warn(
+                        "Impossible de lire le fichier de configuration externe, tentative avec le fichier interne...",
+                        e);
+            }
+        }
+
+        // 2. Fallback sur le fichier interne (classpath)
         try (InputStream is = getClass().getClassLoader().getResourceAsStream(CONFIG_FILE)) {
             if (is == null) {
-                throw new IOException("Fichier de configuration non trouve: " + CONFIG_FILE);
+                throw new IOException("Fichier de configuration non trouve (ni externe, ni interne): " + CONFIG_FILE);
             }
             props.load(is);
-            logger.debug("Configuration chargee depuis {}", CONFIG_FILE);
+            logger.info("Configuration chargee depuis les ressources internes (classpath): {}", CONFIG_FILE);
         }
         return props;
     }

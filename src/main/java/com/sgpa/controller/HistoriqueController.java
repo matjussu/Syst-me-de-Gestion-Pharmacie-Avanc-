@@ -5,13 +5,16 @@ import com.sgpa.dao.impl.VenteDAOImpl;
 import com.sgpa.exception.ServiceException;
 import com.sgpa.model.LigneVente;
 import com.sgpa.model.Vente;
+import com.sgpa.service.ExcelExportService;
 import com.sgpa.service.ExportService;
+import com.sgpa.service.RapportService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +52,8 @@ public class HistoriqueController extends BaseController {
     @FXML private TableColumn<VenteRow, String> colMontant;
     @FXML private TableColumn<VenteRow, String> colOrdonnance;
 
+    @FXML private HBox exportGroup;
+    @FXML private HBox contentArea;
     @FXML private VBox detailPane;
     @FXML private Label lblDetailTitle;
     @FXML private TableView<LigneVenteRow> tableDetail;
@@ -60,12 +65,24 @@ public class HistoriqueController extends BaseController {
 
     private final VenteDAO venteDAO;
     private final ExportService exportService;
+    private final ExcelExportService excelExportService;
+    private final RapportService rapportService;
     private final ObservableList<VenteRow> ventesData = FXCollections.observableArrayList();
     private final ObservableList<LigneVenteRow> detailData = FXCollections.observableArrayList();
 
     public HistoriqueController() {
         this.venteDAO = new VenteDAOImpl();
         this.exportService = new ExportService();
+        this.excelExportService = new ExcelExportService();
+        this.rapportService = new RapportService();
+    }
+
+    @Override
+    protected void onUserSet() {
+        if (exportGroup != null && (currentUser == null || !currentUser.isAdmin())) {
+            exportGroup.setVisible(false);
+            exportGroup.setManaged(false);
+        }
     }
 
     @FXML
@@ -242,23 +259,29 @@ public class HistoriqueController extends BaseController {
 
         exportTask.setOnSucceeded(event -> {
             String filePath = exportTask.getValue();
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Export reussi");
-            alert.setHeaderText("Fichier CSV genere");
-            alert.setContentText("Le fichier a ete exporte vers:\n" + filePath);
-            alert.showAndWait();
+            showSuccess("Export reussi", "Le fichier a ete exporte vers:\n" + filePath);
         });
 
         exportTask.setOnFailed(event -> {
             logger.error("Erreur lors de l'export CSV", exportTask.getException());
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Erreur");
-            alert.setHeaderText("Echec de l'export");
-            alert.setContentText("Une erreur est survenue lors de l'export CSV.");
-            alert.showAndWait();
+            showError("Echec de l'export", "Une erreur est survenue lors de l'export CSV.");
         });
 
         runAsync(exportTask);
+    }
+
+    @FXML
+    private void handleExportPDF() {
+        LocalDate debut = dateDebut.getValue() != null ? dateDebut.getValue() : LocalDate.now();
+        LocalDate fin = dateFin.getValue() != null ? dateFin.getValue() : LocalDate.now();
+        executeExport(() -> rapportService.genererRapportVentes(debut, fin), "Export PDF Ventes", true);
+    }
+
+    @FXML
+    private void handleExportExcel() {
+        LocalDate debut = dateDebut.getValue() != null ? dateDebut.getValue() : LocalDate.now();
+        LocalDate fin = dateFin.getValue() != null ? dateFin.getValue() : LocalDate.now();
+        executeExport(() -> excelExportService.exportVentes(debut, fin), "Export Excel Ventes", true);
     }
 
     /**

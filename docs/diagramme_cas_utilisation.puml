@@ -1,0 +1,164 @@
+@startuml diagramme_cas_utilisation
+' ==========================================
+' SGPA - Diagramme des Cas d'Utilisation
+' ==========================================
+
+left to right direction
+skinparam actorStyle awesome
+skinparam usecase {
+  BackgroundColor White
+  BorderColor #2C3E50
+  ArrowColor #2C3E50
+  FontName Arial
+}
+skinparam packageStyle rectangle
+skinparam dpi 150
+
+' ==========================================
+' ACTEURS
+' ==========================================
+
+actor "Preparateur" as Prep
+actor "Pharmacien" as Pharm
+actor "Systeme" as Sys
+
+Prep <|-- Pharm
+
+' ==========================================
+' SYSTEME SGPA
+' ==========================================
+
+rectangle "SGPA - Systeme de Gestion de Pharmacie Avancee" {
+
+  ' --- Authentification ---
+  package "Authentification" {
+    usecase "Se connecter" as UC_Login
+    usecase "Se deconnecter" as UC_Logout
+    usecase "Verifier identifiants\n(BCrypt)" as UC_VerifPwd
+  }
+
+  ' --- Point de Vente ---
+  package "Point de Vente" {
+    usecase "Effectuer une vente" as UC_Vente
+    usecase "Appliquer algorithme FEFO" as UC_FEFO
+    usecase "Imprimer ticket\nde caisse (PDF)" as UC_Ticket
+    usecase "Consulter historique\ndes ventes" as UC_Historique
+    usecase "Exporter historique CSV" as UC_ExportVente
+    usecase "Effectuer un\nretour produit" as UC_Retour
+  }
+
+  ' --- Alertes & Surveillance ---
+  package "Alertes & Surveillance" {
+    usecase "Consulter les alertes\n(stock bas, peremption)" as UC_Alertes
+    usecase "Exporter rapport\nalertes (PDF)" as UC_ExportAlertes
+    usecase "Verifier seuils de stock" as UC_CheckStock
+    usecase "Detecter lots perimes" as UC_CheckPeremption
+  }
+
+  ' --- Gestion Stock & Catalogue ---
+  package "Gestion Stock & Catalogue" {
+    usecase "Gerer les medicaments\n(CRUD)" as UC_Medicaments
+    usecase "Gerer le stock / lots" as UC_Stock
+    usecase "Exporter stock CSV" as UC_ExportStock
+    usecase "Realiser un inventaire\nphysique" as UC_Inventaire
+    usecase "Regulariser le stock" as UC_Regul
+  }
+
+  ' --- Commandes Fournisseurs ---
+  package "Commandes Fournisseurs" {
+    usecase "Gerer les commandes\nfournisseurs" as UC_Commandes
+    usecase "Receptionner\nune commande" as UC_Reception
+    usecase "Exporter bon de\ncommande (PDF)" as UC_BonCommande
+  }
+
+  ' --- Analyse & Rapports ---
+  package "Analyse & Rapports" {
+    usecase "Consulter les\nstatistiques" as UC_Stats
+    usecase "Consulter les predictions\nde reapprovisionnement" as UC_Predictions
+    usecase "Calculer predictions\nautomatiques" as UC_CalcPred
+    usecase "Generer rapport PDF" as UC_ExportPDF
+    usecase "Exporter donnees\nCSV / Excel" as UC_ExportCSV
+  }
+
+  ' --- Administration ---
+  package "Administration" {
+    usecase "Gerer les utilisateurs" as UC_Users
+    usecase "Consulter le\njournal d'audit" as UC_Audit
+    usecase "Exporter journal CSV" as UC_ExportAudit
+    usecase "Sauvegarder la\nbase de donnees" as UC_Backup
+    usecase "Restaurer une\nsauvegarde" as UC_Restore
+    usecase "Configurer\nl'application" as UC_Settings
+  }
+
+}
+
+' ==========================================
+' RELATIONS ACTEUR -> CAS D'UTILISATION
+' ==========================================
+
+' Preparateur (acces de base)
+Prep --> UC_Login
+Prep --> UC_Logout
+Prep --> UC_Vente
+Prep --> UC_Historique
+Prep --> UC_Alertes
+
+' Pharmacien (acces etendu via heritage + cas supplementaires)
+Pharm --> UC_Retour
+Pharm --> UC_Medicaments
+Pharm --> UC_Stock
+Pharm --> UC_Inventaire
+Pharm --> UC_Commandes
+Pharm --> UC_Predictions
+Pharm --> UC_Stats
+Pharm --> UC_Users
+Pharm --> UC_Audit
+Pharm --> UC_Backup
+Pharm --> UC_Restore
+Pharm --> UC_Settings
+Pharm --> UC_ExportCSV
+Pharm --> UC_ExportPDF
+
+' Systeme (processus automatises)
+Sys --> UC_CheckStock
+Sys --> UC_CheckPeremption
+Sys --> UC_CalcPred
+
+' ==========================================
+' RELATIONS <<include>> ET <<extend>>
+' ==========================================
+
+' Connexion inclut verification BCrypt
+UC_Login ..> UC_VerifPwd : <<include>>
+
+' Vente inclut obligatoirement FEFO
+UC_Vente ..> UC_FEFO : <<include>>
+
+' Impression ticket est optionnelle apres vente
+UC_Ticket .> UC_Vente : <<extend>>
+
+' Alertes incluent les verifications systeme
+UC_Alertes ..> UC_CheckStock : <<include>>
+UC_Alertes ..> UC_CheckPeremption : <<include>>
+
+' Export alertes est optionnel
+UC_ExportAlertes .> UC_Alertes : <<extend>>
+
+' Inventaire inclut la regularisation
+UC_Inventaire ..> UC_Regul : <<include>>
+
+' Reception fait partie de la gestion commandes
+UC_Reception .> UC_Commandes : <<extend>>
+
+' Bon de commande PDF est optionnel
+UC_BonCommande .> UC_Commandes : <<extend>>
+
+' Predictions incluent le calcul automatique
+UC_Predictions ..> UC_CalcPred : <<include>>
+
+' Exports optionnels
+UC_ExportVente .> UC_Historique : <<extend>>
+UC_ExportStock .> UC_Stock : <<extend>>
+UC_ExportAudit .> UC_Audit : <<extend>>
+
+@enduml

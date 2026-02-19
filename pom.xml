@@ -25,6 +25,7 @@
         <logback.version>1.4.12</logback.version>
         <controlsfx.version>11.2.0</controlsfx.version>
         <ikonli.version>12.3.1</ikonli.version>
+        <poi.version>5.2.5</poi.version>
     </properties>
 
     <dependencies>
@@ -104,6 +105,13 @@
             <artifactId>ikonli-fontawesome5-pack</artifactId>
             <version>${ikonli.version}</version>
         </dependency>
+
+        <!-- Apache POI - Excel Generation -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -143,8 +151,9 @@
                         <configuration>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.sgpa.Main</mainClass>
+                                    <mainClass>com.sgpa.Launcher</mainClass>
                                 </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                             </transformers>
                         </configuration>
                     </execution>

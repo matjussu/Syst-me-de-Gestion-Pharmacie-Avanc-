@@ -4,19 +4,26 @@ import com.sgpa.dto.AlertePeremption;
 import com.sgpa.dto.AlerteStock;
 import com.sgpa.model.Lot;
 import com.sgpa.service.AlerteService;
+import com.sgpa.service.ExcelExportService;
+import com.sgpa.service.ExportService;
 import com.sgpa.service.RapportService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
+import org.kordamp.ikonli.javafx.FontIcon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.Desktop;
 import java.io.File;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
@@ -24,12 +31,22 @@ import java.util.List;
  * Gere les onglets stock bas, peremption proche et lots perimes.
  *
  * @author SGPA Team
- * @version 1.0
+ * @version 2.0
  */
 public class AlerteController extends BaseController {
 
     private static final Logger logger = LoggerFactory.getLogger(AlerteController.class);
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    // Toolbar
+    @FXML private TextField searchField;
+    @FXML private HBox exportGroup;
+    @FXML private Button btnExportStockBas;
+    @FXML private Button btnExportPeremption;
+    @FXML private Button btnExportPerimes;
+
+    // Stats
+    @FXML private Label lblTotalAlertes;
 
     @FXML private TabPane tabPane;
 
@@ -40,6 +57,8 @@ public class AlerteController extends BaseController {
     @FXML private TableColumn<AlerteStock, String> colStockActuel;
     @FXML private TableColumn<AlerteStock, String> colSeuilMin;
     @FXML private TableColumn<AlerteStock, String> colStockDeficit;
+    @FXML private TableColumn<AlerteStock, String> colStockNiveau;
+    @FXML private TableColumn<AlerteStock, Void> colStockAction;
 
     // Peremption proche
     @FXML private Label lblPeremptionCount;
@@ -58,16 +77,47 @@ public class AlerteController extends BaseController {
     @FXML private TableColumn<Lot, String> colPerimesLot;
     @FXML private TableColumn<Lot, String> colPerimesDate;
     @FXML private TableColumn<Lot, String> colPerimesQuantite;
+    @FXML private TableColumn<Lot, String> colPerimesRetard;
 
     private final AlerteService alerteService;
     private final RapportService rapportService;
+    private final ExportService exportService;
+    private final ExcelExportService excelExportService;
     private final ObservableList<AlerteStock> stockBasData = FXCollections.observableArrayList();
     private final ObservableList<AlertePeremption> peremptionData = FXCollections.observableArrayList();
     private final ObservableList<Lot> perimesData = FXCollections.observableArrayList();
 
+    private FilteredList<AlerteStock> filteredStockBas;
+    private FilteredList<AlertePeremption> filteredPeremption;
+    private FilteredList<Lot> filteredPerimes;
+
     public AlerteController() {
         this.alerteService = new AlerteService();
         this.rapportService = new RapportService();
+        this.exportService = new ExportService();
+        this.excelExportService = new ExcelExportService();
+    }
+
+    @Override
+    protected void onUserSet() {
+        if (currentUser == null || !currentUser.isAdmin()) {
+            if (exportGroup != null) {
+                exportGroup.setVisible(false);
+                exportGroup.setManaged(false);
+            }
+            if (btnExportStockBas != null) {
+                btnExportStockBas.setVisible(false);
+                btnExportStockBas.setManaged(false);
+            }
+            if (btnExportPeremption != null) {
+                btnExportPeremption.setVisible(false);
+                btnExportPeremption.setManaged(false);
+            }
+            if (btnExportPerimes != null) {
+                btnExportPerimes.setVisible(false);
+                btnExportPerimes.setManaged(false);
+            }
+        }
     }
 
     @FXML
@@ -75,10 +125,43 @@ public class AlerteController extends BaseController {
         setupStockBasTable();
         setupPeremptionTable();
         setupPerimesTable();
+        setupSearchField();
         setupResponsiveTable(tableStockBas);
         setupResponsiveTable(tablePeremption);
         setupResponsiveTable(tablePerimes);
         loadAllAlertes();
+    }
+
+    private void setupSearchField() {
+        filteredStockBas = new FilteredList<>(stockBasData, p -> true);
+        filteredPeremption = new FilteredList<>(peremptionData, p -> true);
+        filteredPerimes = new FilteredList<>(perimesData, p -> true);
+
+        tableStockBas.setItems(filteredStockBas);
+        tablePeremption.setItems(filteredPeremption);
+        tablePerimes.setItems(filteredPerimes);
+    }
+
+    @FXML
+    private void handleSearch() {
+        String query = searchField.getText() != null ? searchField.getText().toLowerCase().trim() : "";
+
+        filteredStockBas.setPredicate(a ->
+            query.isEmpty() || a.getNomMedicament().toLowerCase().contains(query)
+        );
+        filteredPeremption.setPredicate(a ->
+            query.isEmpty() ||
+            a.getNomMedicament().toLowerCase().contains(query) ||
+            a.getNumeroLot().toLowerCase().contains(query)
+        );
+        filteredPerimes.setPredicate(lot -> {
+            String nomMed = lot.getMedicament() != null
+                ? lot.getMedicament().getNomCommercial()
+                : "medicament #" + lot.getIdMedicament();
+            return query.isEmpty() ||
+                   nomMed.toLowerCase().contains(query) ||
+                   lot.getNumeroLot().toLowerCase().contains(query);
+        });
     }
 
     private void setupStockBasTable() {
@@ -102,7 +185,82 @@ public class AlerteController extends BaseController {
             }
         });
 
-        tableStockBas.setItems(stockBasData);
+        // Colonne Niveau avec ProgressBar
+        colStockNiveau.setCellValueFactory(data ->
+            new SimpleStringProperty(String.valueOf(data.getValue().getNiveauCriticite()))
+        );
+        colStockNiveau.setCellFactory(col -> new TableCell<>() {
+            private final ProgressBar bar = new ProgressBar();
+            {
+                bar.setMaxWidth(Double.MAX_VALUE);
+                bar.setPrefHeight(10);
+            }
+
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                    setText(null);
+                } else {
+                    double pct = Integer.parseInt(item) / 100.0;
+                    bar.setProgress(Math.min(pct, 1.0));
+                    bar.getStyleClass().removeAll("stock-progress-low", "stock-progress-medium", "inventaire-progress");
+                    if (pct < 0.25) {
+                        bar.getStyleClass().add("stock-progress-low");
+                    } else if (pct < 0.5) {
+                        bar.getStyleClass().add("stock-progress-medium");
+                    } else {
+                        bar.getStyleClass().add("inventaire-progress");
+                    }
+                    setGraphic(bar);
+                    setText(null);
+                }
+            }
+        });
+
+        // Colonne Action avec bouton Commander
+        colStockAction.setCellFactory(col -> new TableCell<>() {
+            private final Button btnCommander = new Button("Commander");
+            {
+                btnCommander.getStyleClass().add("commander-button");
+                FontIcon icon = new FontIcon("fas-cart-plus");
+                icon.setIconSize(12);
+                icon.setStyle("-fx-icon-color: white;");
+                btnCommander.setGraphic(icon);
+                btnCommander.setOnAction(e -> {
+                    AlerteStock item = getTableView().getItems().get(getIndex());
+                    if (dashboardController != null) {
+                        dashboardController.navigateToCommandeWithMedicament(item.getNomMedicament());
+                    }
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : btnCommander);
+            }
+        });
+
+        // Row factory pour colorer les lignes selon le niveau de criticite
+        tableStockBas.setRowFactory(tv -> new TableRow<>() {
+            @Override
+            protected void updateItem(AlerteStock item, boolean empty) {
+                super.updateItem(item, empty);
+                getStyleClass().removeAll("alert-row-critique", "alert-row-urgent", "alert-row-attention");
+                if (!empty && item != null) {
+                    int niveau = item.getNiveauCriticite();
+                    if (niveau == 0) {
+                        getStyleClass().add("alert-row-critique");
+                    } else if (niveau < 50) {
+                        getStyleClass().add("alert-row-urgent");
+                    } else {
+                        getStyleClass().add("alert-row-attention");
+                    }
+                }
+            }
+        });
     }
 
     private void setupPeremptionTable() {
@@ -116,8 +274,8 @@ public class AlerteController extends BaseController {
                 String.valueOf(data.getValue().getQuantiteStock())));
         colPeremptionUrgence.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getNiveauUrgence()));
 
-        // Colorer l'urgence
-        colPeremptionUrgence.setCellFactory(column -> new TableCell<>() {
+        // Colorer les jours restants
+        colPeremptionJours.setCellFactory(column -> new TableCell<>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
@@ -125,17 +283,69 @@ public class AlerteController extends BaseController {
                     setText(null);
                     setStyle("");
                 } else {
-                    setText(item);
-                    switch (item) {
-                        case "CRITIQUE" -> setStyle("-fx-text-fill: #dc3545; -fx-font-weight: bold;");
-                        case "URGENT" -> setStyle("-fx-text-fill: #fd7e14; -fx-font-weight: bold;");
-                        default -> setStyle("-fx-text-fill: #ffc107;");
+                    long jours = Long.parseLong(item);
+                    setText(item + " j");
+                    if (jours < 0) {
+                        setStyle("-fx-text-fill: #dc2626; -fx-font-weight: bold; -fx-font-style: italic;");
+                    } else if (jours <= 30) {
+                        setStyle("-fx-text-fill: #dc2626; -fx-font-weight: bold;");
+                    } else if (jours <= 60) {
+                        setStyle("-fx-text-fill: #ea580c; -fx-font-weight: bold;");
+                    } else {
+                        setStyle("-fx-text-fill: #d97706;");
                     }
                 }
             }
         });
 
-        tablePeremption.setItems(peremptionData);
+        // Urgence avec badge style
+        colPeremptionUrgence.setCellFactory(column -> new TableCell<>() {
+            private final Label badge = new Label();
+            {
+                badge.getStyleClass().add("urgence-badge");
+            }
+
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                    setText(null);
+                } else {
+                    badge.setText(item);
+                    badge.getStyleClass().removeAll(
+                        "urgence-critique", "urgence-urgent", "urgence-attention", "urgence-perime"
+                    );
+                    switch (item) {
+                        case "PERIME" -> badge.getStyleClass().add("urgence-perime");
+                        case "CRITIQUE" -> badge.getStyleClass().add("urgence-critique");
+                        case "URGENT" -> badge.getStyleClass().add("urgence-urgent");
+                        default -> badge.getStyleClass().add("urgence-attention");
+                    }
+                    setGraphic(badge);
+                    setText(null);
+                }
+            }
+        });
+
+        // Row factory pour colorer les lignes
+        tablePeremption.setRowFactory(tv -> new TableRow<>() {
+            @Override
+            protected void updateItem(AlertePeremption item, boolean empty) {
+                super.updateItem(item, empty);
+                getStyleClass().removeAll(
+                    "alert-row-critique", "alert-row-urgent", "alert-row-attention", "alert-row-perime"
+                );
+                if (!empty && item != null) {
+                    switch (item.getNiveauUrgence()) {
+                        case "PERIME" -> getStyleClass().add("alert-row-perime");
+                        case "CRITIQUE" -> getStyleClass().add("alert-row-critique");
+                        case "URGENT" -> getStyleClass().add("alert-row-urgent");
+                        default -> getStyleClass().add("alert-row-attention");
+                    }
+                }
+            }
+        });
     }
 
     private void setupPerimesTable() {
@@ -150,7 +360,39 @@ public class AlerteController extends BaseController {
         colPerimesQuantite.setCellValueFactory(data -> new SimpleStringProperty(
                 String.valueOf(data.getValue().getQuantiteStock())));
 
-        tablePerimes.setItems(perimesData);
+        // Colonne Retard (jours depuis peremption)
+        colPerimesRetard.setCellValueFactory(data -> {
+            long retard = ChronoUnit.DAYS.between(
+                data.getValue().getDatePeremption(),
+                LocalDate.now()
+            );
+            return new SimpleStringProperty(String.valueOf(retard));
+        });
+        colPerimesRetard.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText("+" + item + " j");
+                    setStyle("-fx-text-fill: #dc2626; -fx-font-weight: bold;");
+                }
+            }
+        });
+
+        // Row factory - tous les lots perimes en rouge
+        tablePerimes.setRowFactory(tv -> new TableRow<>() {
+            @Override
+            protected void updateItem(Lot item, boolean empty) {
+                super.updateItem(item, empty);
+                getStyleClass().remove("alert-row-perime");
+                if (!empty && item != null) {
+                    getStyleClass().add("alert-row-perime");
+                }
+            }
+        });
     }
 
     private void loadAllAlertes() {
@@ -173,8 +415,10 @@ public class AlerteController extends BaseController {
                 peremptionData.setAll(peremption);
                 perimesData.setAll(perimes);
 
-                lblStockBasCount.setText(stockBas.size() + " alerte(s)");
-                lblPeremptionCount.setText(peremption.size() + " alerte(s)");
+                int total = stockBas.size() + peremption.size() + perimes.size();
+                lblTotalAlertes.setText(total + " alerte(s) au total");
+                lblStockBasCount.setText(stockBas.size() + " stock(s) bas");
+                lblPeremptionCount.setText(peremption.size() + " peremption(s) proche");
                 lblPerimesCount.setText(perimes.size() + " lot(s) perime(s)");
             }
 
@@ -244,30 +488,51 @@ public class AlerteController extends BaseController {
                 if (Desktop.isDesktopSupported() && pdfFile.exists()) {
                     Desktop.getDesktop().open(pdfFile);
                 }
-                showAlert(Alert.AlertType.INFORMATION, "Export reussi",
-                        titre + " exporte avec succes:\n" + filePath);
+                showSuccess("Export reussi", titre + " exporte avec succes:\n" + filePath);
             } catch (Exception e) {
                 logger.warn("Impossible d'ouvrir le PDF", e);
-                showAlert(Alert.AlertType.INFORMATION, "Export reussi",
-                        titre + " exporte:\n" + filePath);
+                showSuccess("Export reussi", titre + " exporte:\n" + filePath);
             }
         });
 
         exportTask.setOnFailed(event -> {
             logger.error("Erreur lors de l'export", exportTask.getException());
-            showAlert(Alert.AlertType.ERROR, "Erreur d'export",
-                    "Impossible de generer le rapport PDF.");
+            showError("Erreur d'export", "Impossible de generer le rapport PDF.");
         });
 
         runAsync(exportTask);
     }
 
-    private void showAlert(Alert.AlertType type, String title, String message) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+    @FXML
+    private void handleExportCSV() {
+        executeExport(() -> {
+            List<AlerteStock> stockBas = alerteService.getAlertesStockBas();
+            // Export alertes stock bas as CSV (uses the main alerte data)
+            String filePath = com.sgpa.utils.CSVExporter.generateFilePath("alertes_stock_bas");
+            String[] headers = {"Medicament", "Stock Actuel", "Seuil Min", "Deficit", "Criticite %"};
+            List<Object[]> rows = new java.util.ArrayList<>();
+            for (AlerteStock a : stockBas) {
+                rows.add(new Object[]{a.getNomMedicament(), a.getStockActuel(), a.getSeuilMin(), a.getDeficit(), a.getNiveauCriticite() + "%"});
+            }
+            return com.sgpa.utils.CSVExporter.export(filePath, headers, rows);
+        }, "Export CSV Alertes", true);
+    }
+
+    @FXML
+    private void handleExportExcel() {
+        executeExport(() -> {
+            List<AlerteStock> stockBas = alerteService.getAlertesStockBas();
+            List<AlertePeremption> peremption = alerteService.getAlertesPeremption();
+            List<Lot> perimes = alerteService.getLotsPerimes();
+            // Convert Lot perimes to AlertePeremption for the Excel service
+            List<AlertePeremption> perimesAlertes = new java.util.ArrayList<>();
+            for (Lot lot : perimes) {
+                String nomMed = lot.getMedicament() != null ? lot.getMedicament().getNomCommercial() : "Medicament #" + lot.getIdMedicament();
+                long retard = java.time.temporal.ChronoUnit.DAYS.between(lot.getDatePeremption(), java.time.LocalDate.now());
+                perimesAlertes.add(new AlertePeremption(lot.getIdLot(), lot.getNumeroLot(), lot.getIdMedicament(), nomMed, lot.getDatePeremption(), -retard, lot.getQuantiteStock()));
+            }
+            return excelExportService.exportAlertes(stockBas, peremption, perimesAlertes);
+        }, "Export Excel Alertes", true);
     }
 
     @FunctionalInterface

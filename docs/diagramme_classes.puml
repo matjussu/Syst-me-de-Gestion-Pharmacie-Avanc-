@@ -1,0 +1,361 @@
+@startuml diagramme_classes
+' ==========================================
+' SGPA - Systeme de Gestion de Pharmacie Avancee
+' Diagramme de Classes UML - Modele Domaine
+' ==========================================
+
+top to bottom direction
+
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor White
+  BorderColor #2C3E50
+  ArrowColor #2C3E50
+  FontName Arial
+}
+skinparam packageStyle rectangle
+skinparam dpi 150
+
+' ==========================================
+' ENUMERATIONS
+' ==========================================
+
+package "Enumerations" #FAFAFA {
+
+  enum Role {
+    PHARMACIEN
+    PREPARATEUR
+    --
+    +getLibelle() : String
+    +isAdmin() : boolean
+  }
+
+  enum StatutCommande {
+    EN_ATTENTE
+    RECUE
+    ANNULEE
+    --
+    +getLibelle() : String
+    +isModifiable() : boolean
+    +isFinalisee() : boolean
+  }
+
+  enum StatutInventaire {
+    EN_COURS
+    TERMINEE
+    ANNULEE
+  }
+
+  enum MotifEcart {
+    PERTE
+    CASSE
+    VOL
+    PEREMPTION
+    AJUSTEMENT
+    AUTRE
+    --
+    +getLibelle() : String
+  }
+
+  enum TypeAction {
+    CONNEXION
+    DECONNEXION
+    CREATION
+    MODIFICATION
+    SUPPRESSION
+    VENTE
+    COMMANDE
+    RECEPTION
+    AUTRE
+  }
+
+}
+
+' ==========================================
+' ENTITES PRINCIPALES
+' ==========================================
+
+class Utilisateur {
+  -idUtilisateur : Integer
+  -nomUtilisateur : String
+  -motDePasse : String
+  -nomComplet : String
+  -role : Role
+  -actif : boolean
+  -dateCreation : LocalDateTime
+  -derniereConnexion : LocalDateTime
+  --
+  +isAdmin() : boolean
+}
+
+class Medicament {
+  -idMedicament : Integer
+  -nomCommercial : String
+  -principeActif : String
+  -formeGalenique : String
+  -dosage : String
+  -prixPublic : BigDecimal
+  -necessiteOrdonnance : boolean
+  -seuilMin : int
+  -description : String
+  -actif : boolean
+  --
+  +getNomComplet() : String
+}
+
+class Lot {
+  -idLot : Integer
+  -idMedicament : Integer
+  -idFournisseur : Integer
+  -numeroLot : String
+  -datePeremption : LocalDate
+  -dateFabrication : LocalDate
+  -dateReception : LocalDateTime
+  -quantiteStock : int
+  -prixAchat : BigDecimal
+  --
+  +isPerime() : boolean
+  +isPeremptionProche() : boolean
+  +isVendable() : boolean
+  +getJoursAvantPeremption() : long
+  +deduireStock(quantite : int)
+  +ajouterStock(quantite : int)
+}
+
+class Fournisseur {
+  -idFournisseur : Integer
+  -nom : String
+  -contact : String
+  -adresse : String
+  -telephone : String
+  -email : String
+  -actif : boolean
+}
+
+' ==========================================
+' VENTES
+' ==========================================
+
+class Vente {
+  -idVente : Integer
+  -dateVente : LocalDateTime
+  -montantTotal : BigDecimal
+  -estSurOrdonnance : boolean
+  -numeroOrdonnance : String
+  -idUtilisateur : Integer
+  -notes : String
+  --
+  +addLigneVente(ligne : LigneVente)
+  +recalculerMontantTotal()
+  +getNombreArticles() : int
+}
+
+class LigneVente {
+  -idLigne : Integer
+  -idVente : Integer
+  -idLot : Integer
+  -quantite : int
+  -prixUnitaireApplique : BigDecimal
+  --
+  +getMontantLigne() : BigDecimal
+}
+
+' ==========================================
+' COMMANDES FOURNISSEURS
+' ==========================================
+
+class Commande {
+  -idCommande : Integer
+  -dateCreation : LocalDateTime
+  -dateReception : LocalDateTime
+  -statut : StatutCommande
+  -idFournisseur : Integer
+  -notes : String
+  --
+  +isModifiable() : boolean
+  +isFinalisee() : boolean
+  +marquerRecue()
+  +annuler()
+  +getNombreArticlesCommandes() : int
+}
+
+class LigneCommande {
+  -idLigneCmd : Integer
+  -idCommande : Integer
+  -idMedicament : Integer
+  -quantiteCommandee : int
+  -quantiteRecue : int
+  -prixUnitaire : BigDecimal
+  --
+  +getMontantLigne() : BigDecimal
+  +isCompletelyReceived() : boolean
+}
+
+' ==========================================
+' RETOURS
+' ==========================================
+
+class Retour {
+  -idRetour : Integer
+  -idVente : Integer
+  -idLot : Integer
+  -idUtilisateur : Integer
+  -quantite : int
+  -motif : String
+  -dateRetour : LocalDateTime
+  -reintegre : boolean
+  -commentaire : String
+  --
+  +getNomMedicament() : String
+  +getNumeroLot() : String
+}
+
+' ==========================================
+' INVENTAIRE
+' ==========================================
+
+class SessionInventaire {
+  -idSession : Integer
+  -dateDebut : LocalDateTime
+  -dateFin : LocalDateTime
+  -statut : StatutInventaire
+  -idUtilisateur : Integer
+  -notes : String
+  --
+  +isEnCours() : boolean
+  +isTerminee() : boolean
+  +getNombreComptages() : int
+  +getNombreEcarts() : int
+}
+
+class ComptageInventaire {
+  -idComptage : Integer
+  -idSession : Integer
+  -idLot : Integer
+  -quantiteTheorique : int
+  -quantitePhysique : int
+  -ecart : int
+  -motifEcart : MotifEcart
+  -commentaire : String
+  -dateComptage : LocalDateTime
+  --
+  +hasEcart() : boolean
+  +isSurplus() : boolean
+  +isManque() : boolean
+  +getEcartPourcentage() : double
+}
+
+class Regularisation {
+  -idRegularisation : Integer
+  -idSession : Integer
+  -idLot : Integer
+  -quantiteAncienne : int
+  -quantiteNouvelle : int
+  -raison : MotifEcart
+  -justificatif : String
+  -dateRegularisation : LocalDateTime
+  --
+  +getDifference() : int
+}
+
+' ==========================================
+' AUDIT
+' ==========================================
+
+class AuditLog {
+  -idAudit : Integer
+  -dateAction : LocalDateTime
+  -idUtilisateur : Integer
+  -nomUtilisateur : String
+  -typeAction : TypeAction
+  -entite : String
+  -idEntite : Integer
+  -description : String
+  -adresseIp : String
+}
+
+' ==========================================
+' DTO
+' ==========================================
+
+class PredictionReapprovisionnement <<DTO>> {
+  -idMedicament : int
+  -nomMedicament : String
+  -stockActuel : int
+  -stockVendable : int
+  -consommationJournaliere : double
+  -joursAvantRupture : int
+  -dateRupturePrevue : LocalDate
+  -quantiteSuggeree : int
+  -niveauUrgence : String
+  --
+  +{static} NIVEAU_RUPTURE : String
+  +{static} NIVEAU_CRITIQUE : String
+  +{static} NIVEAU_URGENT : String
+  +{static} NIVEAU_ATTENTION : String
+  +{static} NIVEAU_OK : String
+  --
+  +isRupture() : boolean
+  +isCritique() : boolean
+  +getOrdreUrgence() : int
+}
+
+' ==========================================
+' ASSOCIATIONS - Enums
+' ==========================================
+
+Utilisateur --> Role
+Commande --> StatutCommande
+SessionInventaire --> StatutInventaire
+ComptageInventaire --> MotifEcart
+Regularisation --> MotifEcart
+AuditLog --> TypeAction
+
+' ==========================================
+' ASSOCIATIONS - Medicament / Lot / Fournisseur
+' ==========================================
+
+Medicament "1" *-- "0..*" Lot : contient >
+Fournisseur "1" --> "0..*" Lot : approvisionne >
+Fournisseur "1" *-- "0..*" Commande : recoit >
+
+' ==========================================
+' ASSOCIATIONS - Vente
+' ==========================================
+
+Utilisateur "1" --> "0..*" Vente : realise >
+Vente "1" *-- "1..*" LigneVente : contient >
+LigneVente "*" --> "1" Lot : destocke >
+
+' ==========================================
+' ASSOCIATIONS - Commande
+' ==========================================
+
+Commande "1" *-- "1..*" LigneCommande : contient >
+LigneCommande "*" --> "1" Medicament : concerne >
+
+' ==========================================
+' ASSOCIATIONS - Retour
+' ==========================================
+
+Retour "*" --> "1" Vente : issu de >
+Retour "*" --> "1" Lot : lot retourne >
+Retour "*" --> "1" Utilisateur : enregistre par >
+
+' ==========================================
+' ASSOCIATIONS - Inventaire
+' ==========================================
+
+Utilisateur "1" --> "0..*" SessionInventaire : supervise >
+SessionInventaire "1" *-- "0..*" ComptageInventaire : inclut >
+ComptageInventaire "*" --> "1" Lot : compte >
+Regularisation "*" --> "1" SessionInventaire : issue de >
+Regularisation "*" --> "1" Lot : ajuste >
+
+' ==========================================
+' ASSOCIATIONS - Audit
+' ==========================================
+
+AuditLog "*" --> "0..1" Utilisateur : trace par >
+
+@enduml

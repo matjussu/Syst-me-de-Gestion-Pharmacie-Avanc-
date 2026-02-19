@@ -60,6 +60,47 @@ public class CommandeService {
     }
 
     /**
+     * Cree une nouvelle commande fournisseur avec notes.
+     *
+     * @param idFournisseur l'ID du fournisseur
+     * @param lignes        les lignes de commande
+     * @param notes         les notes de la commande
+     * @return la commande creee
+     * @throws ServiceException si une erreur survient
+     */
+    public Commande creerCommande(int idFournisseur, List<LigneCommande> lignes, String notes) throws ServiceException {
+        if (lignes == null || lignes.isEmpty()) {
+            throw new ServiceException("La commande doit contenir au moins une ligne", ErrorType.VALIDATION);
+        }
+
+        logger.info("Creation d'une commande pour le fournisseur {}", idFournisseur);
+
+        try {
+            Commande commande = new Commande();
+            commande.setIdFournisseur(idFournisseur);
+            commande.setDateCreation(LocalDateTime.now());
+            commande.setStatut(StatutCommande.EN_ATTENTE);
+            commande.setNotes(notes);
+
+            commande = commandeDAO.save(commande);
+
+            for (LigneCommande ligne : lignes) {
+                ligne.setIdCommande(commande.getIdCommande());
+                commandeDAO.saveLigneCommande(ligne);
+            }
+
+            commande.setLignesCommande(lignes);
+            logger.info("Commande {} creee avec {} ligne(s)", commande.getIdCommande(), lignes.size());
+
+            return commande;
+
+        } catch (DAOException e) {
+            logger.error("Erreur lors de la creation de la commande", e);
+            throw new ServiceException("Erreur lors de la creation de la commande", e);
+        }
+    }
+
+    /**
      * Cree une nouvelle commande fournisseur.
      *
      * @param idFournisseur l'ID du fournisseur
@@ -204,6 +245,21 @@ public class CommandeService {
             return commandeDAO.findAll();
         } catch (DAOException e) {
             throw new ServiceException("Erreur lors de la recuperation des commandes", e);
+        }
+    }
+
+    /**
+     * Recupere les lignes d'une commande.
+     *
+     * @param idCommande l'ID de la commande
+     * @return la liste des lignes
+     * @throws ServiceException si une erreur survient
+     */
+    public List<LigneCommande> getLignesCommande(int idCommande) throws ServiceException {
+        try {
+            return commandeDAO.findLignesByCommandeId(idCommande);
+        } catch (DAOException e) {
+            throw new ServiceException("Erreur lors de la recuperation des lignes", e);
         }
     }
 

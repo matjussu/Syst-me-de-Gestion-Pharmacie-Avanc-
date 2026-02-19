@@ -6,7 +6,9 @@ import com.sgpa.dao.impl.MedicamentDAOImpl;
 import com.sgpa.model.Fournisseur;
 import com.sgpa.model.Lot;
 import com.sgpa.model.Medicament;
+import com.sgpa.service.ExcelExportService;
 import com.sgpa.service.ExportService;
+import com.sgpa.service.RapportService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -75,6 +77,8 @@ public class StockController extends BaseController {
     private final LotDAOImpl lotDAO;
     private final FournisseurDAOImpl fournisseurDAO;
     private final ExportService exportService;
+    private final ExcelExportService excelExportService;
+    private final RapportService rapportService;
 
     private final ObservableList<Medicament> medicamentData = FXCollections.observableArrayList();
     private final ObservableList<Lot> lotData = FXCollections.observableArrayList();
@@ -86,6 +90,8 @@ public class StockController extends BaseController {
         this.lotDAO = new LotDAOImpl();
         this.fournisseurDAO = new FournisseurDAOImpl();
         this.exportService = new ExportService();
+        this.excelExportService = new ExcelExportService();
+        this.rapportService = new RapportService();
     }
 
     @FXML
@@ -285,7 +291,7 @@ public class StockController extends BaseController {
 
         lblTotalMedicaments.setText(total + " medicaments");
         lblStockBas.setText(stockBas + " en stock bas");
-        lblPeremptionProche.setText(peremptionProche + " peremption proche");
+        lblPeremptionProche.setText(peremptionProche + " peremptions proches");
     }
 
     private void handleMedicamentSelection(Medicament medicament) {
@@ -404,19 +410,19 @@ public class StockController extends BaseController {
     private void handleConfirmAddLot() {
         // Validation
         if (comboMedicament.getValue() == null) {
-            showAlert(Alert.AlertType.WARNING, "Attention", "Veuillez selectionner un medicament.");
+            showWarning("Attention", "Veuillez selectionner un medicament.");
             return;
         }
         if (txtNumeroLot.getText().trim().isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Attention", "Veuillez saisir un numero de lot.");
+            showWarning("Attention", "Veuillez saisir un numero de lot.");
             return;
         }
         if (dpPeremption.getValue() == null) {
-            showAlert(Alert.AlertType.WARNING, "Attention", "Veuillez selectionner une date de peremption.");
+            showWarning("Attention", "Veuillez selectionner une date de peremption.");
             return;
         }
         if (comboFournisseur.getValue() == null) {
-            showAlert(Alert.AlertType.WARNING, "Attention", "Veuillez selectionner un fournisseur.");
+            showWarning("Attention", "Veuillez selectionner un fournisseur.");
             return;
         }
 
@@ -424,7 +430,7 @@ public class StockController extends BaseController {
         try {
             prixAchat = new BigDecimal(txtPrixAchat.getText().replace(",", "."));
         } catch (Exception e) {
-            showAlert(Alert.AlertType.WARNING, "Attention", "Prix d'achat invalide.");
+            showWarning("Attention", "Prix d'achat invalide.");
             return;
         }
 
@@ -446,48 +452,43 @@ public class StockController extends BaseController {
             protected void succeeded() {
                 handleCancelAddLot();
                 handleRefresh();
-                showAlert(Alert.AlertType.INFORMATION, "Succes", "Lot ajoute avec succes.");
+                showSuccess("Succes", "Lot ajoute avec succes.");
             }
 
             @Override
             protected void failed() {
                 logger.error("Erreur ajout lot", getException());
-                showAlert(Alert.AlertType.ERROR, "Erreur", "Impossible d'ajouter le lot: " + getException().getMessage());
+                showError("Erreur", "Impossible d'ajouter le lot: " + getException().getMessage());
             }
         };
         runAsync(task);
     }
 
     private void handleDeleteLot(Lot lot) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Confirmation");
-        confirm.setHeaderText("Supprimer le lot?");
-        confirm.setContentText("Voulez-vous vraiment supprimer le lot " + lot.getNumeroLot() + "?");
+        showDangerConfirmation("Supprimer le lot?",
+                "Voulez-vous vraiment supprimer le lot " + lot.getNumeroLot() + "?",
+                () -> {
+                    Task<Void> task = new Task<>() {
+                        @Override
+                        protected Void call() throws Exception {
+                            lotDAO.delete(lot.getIdLot());
+                            return null;
+                        }
 
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                Task<Void> task = new Task<>() {
-                    @Override
-                    protected Void call() throws Exception {
-                        lotDAO.delete(lot.getIdLot());
-                        return null;
-                    }
+                        @Override
+                        protected void succeeded() {
+                            handleMedicamentSelection(selectedMedicament);
+                            updateStats();
+                        }
 
-                    @Override
-                    protected void succeeded() {
-                        handleMedicamentSelection(selectedMedicament);
-                        updateStats();
-                    }
-
-                    @Override
-                    protected void failed() {
-                        logger.error("Erreur suppression lot", getException());
-                        showAlert(Alert.AlertType.ERROR, "Erreur", "Impossible de supprimer le lot.");
-                    }
-                };
-                runAsync(task);
-            }
-        });
+                        @Override
+                        protected void failed() {
+                            logger.error("Erreur suppression lot", getException());
+                            showError("Erreur", "Impossible de supprimer le lot.");
+                        }
+                    };
+                    runAsync(task);
+                });
     }
 
     @FXML
@@ -501,24 +502,26 @@ public class StockController extends BaseController {
 
         exportTask.setOnSucceeded(event -> {
             String filePath = exportTask.getValue();
-            showAlert(Alert.AlertType.INFORMATION, "Export reussi",
-                    "Le fichier CSV a ete genere:\n" + filePath);
+            showSuccess("Export reussi", "Le fichier CSV a ete genere:\n" + filePath);
         });
 
         exportTask.setOnFailed(event -> {
             logger.error("Erreur lors de l'export CSV", exportTask.getException());
-            showAlert(Alert.AlertType.ERROR, "Erreur",
+            showError("Erreur",
                     "Une erreur est survenue lors de l'export CSV.");
         });
 
         runAsync(exportTask);
     }
 
-    private void showAlert(Alert.AlertType type, String title, String message) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+    @FXML
+    private void handleExportPDF() {
+        executeExport(() -> rapportService.genererRapportStock(), "Export PDF Stock", true);
     }
+
+    @FXML
+    private void handleExportExcel() {
+        executeExport(() -> excelExportService.exportStock(), "Export Excel Stock", true);
+    }
+
 }

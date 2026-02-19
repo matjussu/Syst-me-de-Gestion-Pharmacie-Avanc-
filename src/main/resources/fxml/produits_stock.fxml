@@ -23,13 +23,13 @@
                 <graphic><FontIcon iconLiteral="fas-search"/></graphic>
             </Button>
             <Region HBox.hgrow="ALWAYS"/>
-            <Button text="Nouveau Medicament" onAction="#handleNewMedicament" styleClass="action-button, primary">
+            <Button fx:id="btnNewMedicament" text="Nouveau Medicament" onAction="#handleNewMedicament" styleClass="action-button, primary">
                 <graphic><FontIcon iconLiteral="fas-plus"/></graphic>
             </Button>
-            <Button text="Ajouter Lot" onAction="#handleAddLot" styleClass="action-button, primary">
+            <Button fx:id="btnAddLot" text="Ajouter Lot" onAction="#handleAddLot" styleClass="action-button, primary">
                 <graphic><FontIcon iconLiteral="fas-box"/></graphic>
             </Button>
-            <Button text="Exporter CSV" onAction="#handleExportCSV" styleClass="action-button">
+            <Button fx:id="btnExportCSV" text="Exporter CSV" onAction="#handleExportCSV" styleClass="action-button">
                 <graphic><FontIcon iconLiteral="fas-file-csv"/></graphic>
             </Button>
             <Button onAction="#handleRefresh" styleClass="icon-button">
@@ -159,7 +159,7 @@
                                     </Button>
                                     <Region HBox.hgrow="ALWAYS"/>
                                     <Button text="Annuler" onAction="#handleCancelForm" styleClass="secondary-button"/>
-                                    <Button text="Enregistrer" onAction="#handleSaveMedicament" styleClass="action-button, success">
+                                    <Button fx:id="btnSaveMedicament" text="Enregistrer" onAction="#handleSaveMedicament" styleClass="action-button, success">
                                         <graphic><FontIcon iconLiteral="fas-save"/></graphic>
                                     </Button>
                                 </HBox>
@@ -176,7 +176,7 @@
                             <HBox alignment="CENTER_LEFT" spacing="10">
                                 <Label fx:id="lblLotsTitle" text="Lots" styleClass="panel-title"/>
                                 <Region HBox.hgrow="ALWAYS"/>
-                                <Button text="Ajouter lot" onAction="#handleAddLotToSelected" styleClass="action-button-small">
+                                <Button fx:id="btnAddLotToSelected" text="Ajouter lot" onAction="#handleAddLotToSelected" styleClass="action-button-small">
                                     <graphic><FontIcon iconLiteral="fas-plus"/></graphic>
                                 </Button>
                             </HBox>

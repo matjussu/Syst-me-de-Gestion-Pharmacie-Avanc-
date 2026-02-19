@@ -2,11 +2,18 @@ package com.sgpa.controller;
 
 import com.sgpa.model.Utilisateur;
 import com.sgpa.utils.AnimationUtils;
+import com.sgpa.utils.DialogHelper;
 import javafx.animation.*;
+import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.TableView;
+import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.awt.Desktop;
+import java.io.File;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -50,6 +57,54 @@ public abstract class BaseController {
 
     protected void runAsync(javafx.concurrent.Task<?> task) {
         EXECUTOR.submit(task);
+    }
+
+    // --- Methodes de dialog utilitaires ---
+
+    protected StackPane getDialogOwner() {
+        return dashboardController.getContentArea();
+    }
+
+    protected void showSuccess(String title, String message) {
+        DialogHelper.showSuccess(getDialogOwner(), title, message);
+    }
+
+    protected void showError(String title, String message) {
+        DialogHelper.showError(getDialogOwner(), title, message);
+    }
+
+    protected void showWarning(String title, String message) {
+        DialogHelper.showWarning(getDialogOwner(), title, message);
+    }
+
+    protected void showInfo(String title, String message) {
+        DialogHelper.showInfo(getDialogOwner(), title, message);
+    }
+
+    protected void showConfirmation(String title, String message, Runnable onConfirm) {
+        DialogHelper.showConfirmation(getDialogOwner(), title, message, onConfirm, null);
+    }
+
+    protected void showConfirmation(String title, String message,
+                                     String confirmLabel, String cancelLabel,
+                                     Runnable onConfirm, Runnable onCancel) {
+        DialogHelper.showConfirmation(getDialogOwner(), title, message, confirmLabel, cancelLabel, onConfirm, onCancel);
+    }
+
+    protected void showDangerConfirmation(String title, String message, Runnable onConfirm) {
+        DialogHelper.showDangerConfirmation(getDialogOwner(), title, message, onConfirm, null);
+    }
+
+    protected void showDangerConfirmation(String title, String message,
+                                           String confirmLabel, String cancelLabel,
+                                           Runnable onConfirm, Runnable onCancel) {
+        DialogHelper.showDangerConfirmation(getDialogOwner(), title, message, confirmLabel, cancelLabel, onConfirm, onCancel);
+    }
+
+    protected void showCustomContent(String title, Node content,
+                                      String confirmLabel, String cancelLabel,
+                                      Runnable onConfirm, Runnable onCancel) {
+        DialogHelper.showCustomContent(getDialogOwner(), title, content, confirmLabel, cancelLabel, onConfirm, onCancel);
     }
 
     // --- Methodes d'animation utilitaires ---
@@ -96,5 +151,42 @@ public abstract class BaseController {
 
     protected void setupResponsiveTable(TableView<?> tableView) {
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+    }
+
+    // --- Export utilitaires ---
+
+    private static final Logger logger = LoggerFactory.getLogger(BaseController.class);
+
+    @FunctionalInterface
+    protected interface ExportFunction {
+        String export() throws Exception;
+    }
+
+    protected void executeExport(ExportFunction exportFn, String successTitle, boolean openFile) {
+        javafx.concurrent.Task<String> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected String call() throws Exception {
+                return exportFn.export();
+            }
+        };
+        task.setOnSucceeded(e -> {
+            String filePath = task.getValue();
+            if (openFile && filePath != null) {
+                try {
+                    File f = new File(filePath);
+                    if (Desktop.isDesktopSupported() && f.exists()) {
+                        Desktop.getDesktop().open(f);
+                    }
+                } catch (Exception ex) {
+                    logger.warn("Impossible d'ouvrir le fichier: {}", filePath, ex);
+                }
+            }
+            Platform.runLater(() -> showSuccess(successTitle, "Fichier genere:\n" + filePath));
+        });
+        task.setOnFailed(e -> {
+            logger.error("Erreur lors de l'export", task.getException());
+            Platform.runLater(() -> showError("Erreur d'export", "Une erreur est survenue lors de la generation du fichier."));
+        });
+        runAsync(task);
     }
 }

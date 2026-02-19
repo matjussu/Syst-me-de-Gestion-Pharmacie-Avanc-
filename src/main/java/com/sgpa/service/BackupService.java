@@ -311,7 +311,7 @@ public class BackupService {
         }
 
         // Securite: verifier que le fichier est dans le repertoire de backup
-        if (!filePath.getParent().toString().equals(BACKUP_DIR)) {
+        if (!filePath.getParent().equals(Paths.get(BACKUP_DIR))) {
             throw new ServiceException("Operation non autorisee");
         }
 

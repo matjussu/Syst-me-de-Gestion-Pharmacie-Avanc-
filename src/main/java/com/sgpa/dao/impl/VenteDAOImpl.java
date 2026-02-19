@@ -63,7 +63,8 @@ public class VenteDAOImpl implements VenteDAO {
             "SELECT * FROM ventes WHERE DATE(date_vente) = ? ORDER BY date_vente DESC";
 
     private static final String SQL_FIND_BY_DATE_RANGE =
-            "SELECT * FROM ventes WHERE DATE(date_vente) BETWEEN ? AND ? ORDER BY date_vente DESC";
+            "SELECT v.*, COALESCE((SELECT SUM(lv.quantite) FROM ligne_ventes lv WHERE lv.id_vente = v.id_vente), 0) AS nombre_articles " +
+            "FROM ventes v WHERE DATE(v.date_vente) BETWEEN ? AND ? ORDER BY v.date_vente DESC";
 
     private static final String SQL_FIND_BY_UTILISATEUR =
             "SELECT * FROM ventes WHERE id_utilisateur = ? ORDER BY date_vente DESC";
@@ -314,7 +315,9 @@ public class VenteDAOImpl implements VenteDAO {
             ps.setDate(2, Date.valueOf(dateFin));
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    ventes.add(mapResultSetToVente(rs));
+                    Vente vente = mapResultSetToVente(rs);
+                    vente.setNombreArticlesCache(rs.getInt("nombre_articles"));
+                    ventes.add(vente);
                 }
             }
             return ventes;

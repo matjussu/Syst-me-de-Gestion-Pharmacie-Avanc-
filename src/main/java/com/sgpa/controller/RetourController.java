@@ -5,6 +5,9 @@ import com.sgpa.model.LigneVente;
 import com.sgpa.model.Lot;
 import com.sgpa.model.Retour;
 import com.sgpa.model.Vente;
+import com.sgpa.service.ExcelExportService;
+import com.sgpa.service.ExportService;
+import com.sgpa.service.RapportService;
 import com.sgpa.service.RetourService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -76,6 +79,9 @@ public class RetourController extends BaseController {
     @FXML private TableColumn<RetourRow, String> colRetourUtilisateur;
 
     private final RetourService retourService;
+    private final RapportService rapportService;
+    private final ExportService exportService;
+    private final ExcelExportService excelExportService;
     private final ObservableList<LigneVenteRow> lignesVenteData = FXCollections.observableArrayList();
     private final ObservableList<RetourRow> retoursData = FXCollections.observableArrayList();
 
@@ -85,6 +91,9 @@ public class RetourController extends BaseController {
 
     public RetourController() {
         this.retourService = new RetourService();
+        this.rapportService = new RapportService();
+        this.exportService = new ExportService();
+        this.excelExportService = new ExcelExportService();
     }
 
     @FXML
@@ -204,7 +213,7 @@ public class RetourController extends BaseController {
     private void handleRechercherVente() {
         String numeroVenteStr = txtNumeroVente.getText().trim();
         if (numeroVenteStr.isEmpty()) {
-            showError("Veuillez entrer un numero de vente.");
+            showError("Erreur", "Veuillez entrer un numero de vente.");
             return;
         }
 
@@ -212,7 +221,7 @@ public class RetourController extends BaseController {
         try {
             idVente = Integer.parseInt(numeroVenteStr);
         } catch (NumberFormatException e) {
-            showError("Le numero de vente doit etre un nombre.");
+            showError("Erreur", "Le numero de vente doit etre un nombre.");
             return;
         }
 
@@ -231,9 +240,9 @@ public class RetourController extends BaseController {
         searchTask.setOnFailed(event -> {
             Throwable ex = searchTask.getException();
             if (ex instanceof ServiceException) {
-                showError(ex.getMessage());
+                showError("Erreur", ex.getMessage());
             } else {
-                showError("Erreur lors de la recherche de la vente.");
+                showError("Erreur", "Erreur lors de la recherche de la vente.");
                 logger.error("Erreur recherche vente", ex);
             }
             resetFormulaire();
@@ -315,19 +324,19 @@ public class RetourController extends BaseController {
     @FXML
     private void handleEnregistrerRetour() {
         if (ligneSelectionnee == null || venteSelectionnee == null) {
-            showError("Veuillez selectionner un article a retourner.");
+            showError("Erreur", "Veuillez selectionner un article a retourner.");
             return;
         }
 
         String motif = comboMotif.getValue();
         if (motif == null || motif.isEmpty()) {
-            showError("Veuillez selectionner un motif de retour.");
+            showError("Erreur", "Veuillez selectionner un motif de retour.");
             return;
         }
 
         int quantite = spinnerQuantite.getValue();
         if (quantite > ligneSelectionnee.quantiteRestante) {
-            showError("La quantite ne peut pas depasser " + ligneSelectionnee.quantiteRestante);
+            showError("Erreur", "La quantite ne peut pas depasser " + ligneSelectionnee.quantiteRestante);
             return;
         }
 
@@ -351,7 +360,7 @@ public class RetourController extends BaseController {
 
         saveTask.setOnSucceeded(event -> {
             Retour retour = saveTask.getValue();
-            showSuccess(String.format("Retour #%d enregistre avec succes.%s",
+            showSuccess("Succes", String.format("Retour #%d enregistre avec succes.%s",
                     retour.getIdRetour(),
                     retour.isReintegre() ? " Stock reintegre." : ""));
 
@@ -365,9 +374,9 @@ public class RetourController extends BaseController {
         saveTask.setOnFailed(event -> {
             Throwable ex = saveTask.getException();
             if (ex instanceof ServiceException) {
-                showError(ex.getMessage());
+                showError("Erreur", ex.getMessage());
             } else {
-                showError("Erreur lors de l'enregistrement du retour.");
+                showError("Erreur", "Erreur lors de l'enregistrement du retour.");
                 logger.error("Erreur enregistrement retour", ex);
             }
         });
@@ -453,20 +462,52 @@ public class RetourController extends BaseController {
         runAsync(loadTask);
     }
 
-    private void showError(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Erreur");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+    @FXML
+    private void handleExportPDF() {
+        if (retoursData.isEmpty()) {
+            showWarning("Aucune donnee", "Aucun retour a exporter.");
+            return;
+        }
+        LocalDate debut = dateDebut.getValue();
+        LocalDate fin = dateFin.getValue();
+        executeExport(() -> {
+            List<Retour> retours = retourService.getRetoursByPeriode(
+                    debut != null ? debut : LocalDate.now().minusDays(30),
+                    fin != null ? fin : LocalDate.now());
+            return rapportService.genererRapportRetours(retours);
+        }, "Export PDF Retours", true);
     }
 
-    private void showSuccess(String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Succes");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+    @FXML
+    private void handleExportCSV() {
+        if (retoursData.isEmpty()) {
+            showWarning("Aucune donnee", "Aucun retour a exporter.");
+            return;
+        }
+        LocalDate debut = dateDebut.getValue();
+        LocalDate fin = dateFin.getValue();
+        executeExport(() -> {
+            List<Retour> retours = retourService.getRetoursByPeriode(
+                    debut != null ? debut : LocalDate.now().minusDays(30),
+                    fin != null ? fin : LocalDate.now());
+            return exportService.exportRetours(retours);
+        }, "Export CSV Retours", true);
+    }
+
+    @FXML
+    private void handleExportExcel() {
+        if (retoursData.isEmpty()) {
+            showWarning("Aucune donnee", "Aucun retour a exporter.");
+            return;
+        }
+        LocalDate debut = dateDebut.getValue();
+        LocalDate fin = dateFin.getValue();
+        executeExport(() -> {
+            List<Retour> retours = retourService.getRetoursByPeriode(
+                    debut != null ? debut : LocalDate.now().minusDays(30),
+                    fin != null ? fin : LocalDate.now());
+            return excelExportService.exportRetours(retours);
+        }, "Export Excel Retours", true);
     }
 
     /**

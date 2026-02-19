@@ -1,0 +1,188 @@
+@startuml diagramme_architecture
+' ==========================================
+' SGPA - Systeme de Gestion de Pharmacie Avancee
+' Diagramme d'Architecture en Couches
+' ==========================================
+
+top to bottom direction
+
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor White
+  BorderColor #2C3E50
+  ArrowColor #2C3E50
+  FontName Arial
+}
+skinparam package {
+  BackgroundColor White
+  BorderColor #2C3E50
+  FontName Arial
+}
+skinparam dpi 150
+
+' ==========================================
+' COUCHE PRESENTATION (JavaFX)
+' ==========================================
+
+package "Couche Presentation (JavaFX)" #FFF0F5 {
+
+  abstract class BaseController {
+    #currentUser : Utilisateur
+    #dashboardController : DashboardController
+    --
+    +setCurrentUser(user : Utilisateur)
+    +onViewDisplayed()
+    #showSuccess(title : String, msg : String)
+    #showError(title : String, msg : String)
+    #runAsync(task : Task)
+    #executeExport(fn : ExportFunction, title : String, open : boolean)
+  }
+
+  class LoginController {
+    -authentifier()
+  }
+
+  class VenteController {
+    -ajouterAuPanier()
+    -validerVente()
+  }
+
+  class CommandeController {
+    -creerCommande()
+    -receptionner()
+  }
+
+  class InventaireController {
+    -demarrerSession()
+    -saisirComptage()
+  }
+
+  class "DashboardController\nHistoriqueController\nRetourController\nAlerteController\nStockController\nMedicamentController\nPredictionController\nStatistiquesController\nUtilisateurController\nAuditController\nBackupController\nSettingsController" as AutresControllers << (C,#CCCCCC) >>
+
+  BaseController <|-- LoginController
+  BaseController <|-- VenteController
+  BaseController <|-- CommandeController
+  BaseController <|-- InventaireController
+  BaseController <|-- AutresControllers
+
+}
+
+' ==========================================
+' COUCHE SERVICE (Logique Metier)
+' ==========================================
+
+package "Couche Service (Logique Metier)" #FFFFF0 {
+
+  class VenteService {
+    +effectuerVente(vente : Vente) : Vente
+    +calculerTotalPanier(lignes : List) : BigDecimal
+    -appliquerFEFO(medId : int, qte : int) : List
+  }
+
+  class AlerteService {
+    +getAlertesStockBas() : List
+    +getAlertesPeremptionProche() : List
+    +getLotsPerimes() : List
+  }
+
+  class PredictionService {
+    +calculerPredictions() : List
+    +calculerPrediction(medId : int) : Prediction
+  }
+
+  class InventaireService {
+    +demarrerSession(userId : int) : Session
+    +saisirComptage(comptage : Comptage)
+    +terminerSession(sessionId : int)
+    +regulariserStock(sessionId : int)
+  }
+
+  class "AuthenticationService\nCommandeService\nStockService\nRetourService\nUtilisateurService\nAuditService\nRapportService\nExportService\nBackupService\nConfigService" as AutresServices << (S,#CCCCCC) >>
+
+}
+
+' ==========================================
+' COUCHE DAO (Acces aux donnees)
+' ==========================================
+
+package "Couche DAO (Acces aux Donnees)" #F0FFF0 {
+
+  interface "GenericDAO<T, ID>" as GenericDAO {
+    +findById(id : ID) : Optional<T>
+    +findAll() : List<T>
+    +save(entity : T) : T
+    +update(entity : T)
+    +delete(id : ID)
+    +count() : long
+    +existsById(id : ID) : boolean
+  }
+
+  class "MedicamentDAOImpl\nLotDAOImpl\nVenteDAOImpl\nCommandeDAOImpl\nFournisseurDAOImpl\nUtilisateurDAOImpl\nAuditLogDAOImpl\nRetourDAOImpl\nSessionInventaireDAOImpl\nComptageInventaireDAOImpl\nRegularisationDAOImpl\nConsommationDAOImpl" as DAOImpls << (I,#88CC88) Implementations JDBC >>
+
+  GenericDAO <|.. DAOImpls
+
+}
+
+' ==========================================
+' BASE DE DONNEES
+' ==========================================
+
+package "Base de Donnees" #F5F5F5 {
+  class "sgpa_pharmacie (MySQL 8)" as DB << (D,#FF7700) >> {
+    13 tables : utilisateurs, medicaments,
+    lots, fournisseurs, ventes, ligne_ventes,
+    commandes, ligne_commandes, retours,
+    audit_log, sessions_inventaire,
+    comptages_inventaire, regularisations
+  }
+}
+
+' ==========================================
+' DEPENDANCES INTER-COUCHES
+' ==========================================
+
+LoginController ..> AutresServices : utilise
+VenteController ..> VenteService : utilise
+CommandeController ..> AutresServices : utilise
+InventaireController ..> InventaireService : utilise
+AutresControllers ..> AlerteService : utilise
+AutresControllers ..> PredictionService : utilise
+AutresControllers ..> AutresServices : utilise
+
+VenteService ..> DAOImpls : utilise
+AlerteService ..> DAOImpls : utilise
+PredictionService ..> DAOImpls : utilise
+InventaireService ..> DAOImpls : utilise
+AutresServices ..> DAOImpls : utilise
+
+DAOImpls ..> DB : JDBC\nHikariCP
+
+' ==========================================
+' NOTES
+' ==========================================
+
+note right of BaseController
+  Tous les controleurs heritent
+  de BaseController qui fournit :
+  - Gestion utilisateur courant
+  - Dialogues standardises
+  - Execution asynchrone
+  - Export de fichiers
+end note
+
+note right of VenteService
+  L'algorithme FEFO (First Expired,
+  First Out) est implemente ici :
+  les lots les plus proches de
+  la peremption sont destockes
+  en premier.
+end note
+
+note right of GenericDAO
+  Interface generique implementee
+  par 12 classes DAO concretes
+  utilisant PreparedStatement
+  (protection injection SQL)
+end note
+
+@enduml

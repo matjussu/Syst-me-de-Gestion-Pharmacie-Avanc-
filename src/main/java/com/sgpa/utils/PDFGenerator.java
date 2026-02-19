@@ -2,20 +2,30 @@ package com.sgpa.utils;
 
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.colors.DeviceRgb;
+import com.itextpdf.kernel.events.Event;
+import com.itextpdf.kernel.events.IEventHandler;
+import com.itextpdf.kernel.events.PdfDocumentEvent;
 import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.geom.PageSize;
+import com.itextpdf.kernel.geom.Rectangle;
 import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfPage;
 import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.kernel.pdf.canvas.PdfCanvas;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.borders.Border;
 import com.itextpdf.layout.borders.SolidBorder;
 import com.itextpdf.layout.element.Cell;
+import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.properties.HorizontalAlignment;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
 import com.itextpdf.io.font.constants.StandardFonts;
+import com.itextpdf.io.image.ImageData;
+import com.itextpdf.io.image.ImageDataFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +52,9 @@ public class PDFGenerator {
 
     /** Couleur primaire (bleu SGPA) */
     public static final DeviceRgb COLOR_PRIMARY = new DeviceRgb(37, 99, 235);
+
+    /** Couleur verte ApotiCare (pour les en-tetes avec logo) */
+    public static final DeviceRgb COLOR_GREEN = new DeviceRgb(22, 101, 52);
 
     /** Couleur secondaire (gris fonce) */
     public static final DeviceRgb COLOR_SECONDARY = new DeviceRgb(51, 65, 85);
@@ -86,6 +99,9 @@ public class PDFGenerator {
      */
     public Document createDocument(String filePath, PageSize pageSize) throws IOException {
         ensureDirectoryExists(filePath);
+        // Recreer les polices pour chaque document (evite les polices perimees apres fermeture)
+        this.fontRegular = PdfFontFactory.createFont(StandardFonts.HELVETICA);
+        this.fontBold = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
         PdfWriter writer = new PdfWriter(filePath);
         PdfDocument pdf = new PdfDocument(writer);
         Document document = new Document(pdf, pageSize);
@@ -102,7 +118,11 @@ public class PDFGenerator {
      * @throws IOException si une erreur survient
      */
     public Document createA4Document(String filePath) throws IOException {
-        return createDocument(filePath, PageSize.A4);
+        Document document = createDocument(filePath, PageSize.A4);
+        // Ajouter les numeros de page automatiquement
+        PdfDocument pdfDoc = document.getPdfDocument();
+        pdfDoc.addEventHandler(PdfDocumentEvent.END_PAGE, new PageNumberEventHandler(fontRegular));
+        return document;
     }
 
     /**
@@ -146,7 +166,7 @@ public class PDFGenerator {
         Paragraph header = new Paragraph(nomPharmacie)
                 .setFont(fontBold)
                 .setFontSize(16)
-                .setFontColor(COLOR_PRIMARY)
+                .setFontColor(COLOR_GREEN)
                 .setTextAlignment(TextAlignment.CENTER);
         document.add(header);
 
@@ -172,7 +192,87 @@ public class PDFGenerator {
 
         // Ligne de separation
         document.add(new Paragraph("")
-                .setBorderBottom(new SolidBorder(COLOR_PRIMARY, 1))
+                .setBorderBottom(new SolidBorder(COLOR_GREEN, 1))
+                .setMarginBottom(10));
+
+        // Titre du document
+        Paragraph titleParagraph = new Paragraph(titre)
+                .setFont(fontBold)
+                .setFontSize(14)
+                .setFontColor(COLOR_SECONDARY)
+                .setTextAlignment(TextAlignment.CENTER)
+                .setMarginTop(10)
+                .setMarginBottom(10);
+        document.add(titleParagraph);
+    }
+
+    /**
+     * Ajoute un en-tete avec logo au document.
+     *
+     * @param document     le document PDF
+     * @param titre        le titre du document
+     * @param nomPharmacie le nom de la pharmacie
+     * @param adresse      l'adresse (peut etre null)
+     * @param telephone    le telephone (peut etre null)
+     * @param siret        le numero SIRET (peut etre null)
+     */
+    public void addHeaderWithLogo(Document document, String titre, String nomPharmacie,
+                                   String adresse, String telephone, String siret) {
+        boolean logoAdded = false;
+
+        // Charger et ajouter le logo (remplace le nom texte de la pharmacie)
+        try {
+            java.io.InputStream logoStream = getClass().getResourceAsStream("/images/Apoticare_login-removebg-preview.png");
+            if (logoStream != null) {
+                byte[] logoBytes = logoStream.readAllBytes();
+                logoStream.close();
+                ImageData imageData = ImageDataFactory.create(logoBytes);
+                Image logo = new Image(imageData);
+                logo.setWidth(150);
+                logo.setHorizontalAlignment(HorizontalAlignment.CENTER);
+                logo.setMarginBottom(6);
+                document.add(logo);
+                logoAdded = true;
+            } else {
+                logger.warn("Logo introuvable dans le classpath, utilisation de l'en-tete texte");
+            }
+        } catch (Exception e) {
+            logger.warn("Impossible de charger le logo, en-tete texte utilise", e);
+        }
+
+        // Si pas de logo, afficher le nom en texte (fallback)
+        if (!logoAdded) {
+            Paragraph header = new Paragraph(nomPharmacie)
+                    .setFont(fontBold)
+                    .setFontSize(16)
+                    .setFontColor(COLOR_GREEN)
+                    .setTextAlignment(TextAlignment.CENTER);
+            document.add(header);
+        }
+
+        // Informations de contact
+        if (adresse != null && !adresse.isEmpty()) {
+            document.add(new Paragraph(adresse)
+                    .setFont(fontRegular)
+                    .setFontSize(9)
+                    .setTextAlignment(TextAlignment.CENTER));
+        }
+        if (telephone != null && !telephone.isEmpty()) {
+            document.add(new Paragraph("Tel: " + telephone)
+                    .setFont(fontRegular)
+                    .setFontSize(9)
+                    .setTextAlignment(TextAlignment.CENTER));
+        }
+        if (siret != null && !siret.isEmpty()) {
+            document.add(new Paragraph("SIRET: " + siret)
+                    .setFont(fontRegular)
+                    .setFontSize(9)
+                    .setTextAlignment(TextAlignment.CENTER));
+        }
+
+        // Ligne de separation verte
+        document.add(new Paragraph("")
+                .setBorderBottom(new SolidBorder(COLOR_GREEN, 1))
                 .setMarginBottom(10));
 
         // Titre du document
@@ -284,7 +384,7 @@ public class PDFGenerator {
                         .setTextAlignment(TextAlignment.RIGHT))
                 .setPadding(5)
                 .setBorder(Border.NO_BORDER)
-                .setBorderTop(new SolidBorder(COLOR_PRIMARY, 1));
+                .setBorderTop(new SolidBorder(COLOR_GREEN, 1));
         table.addCell(labelCell);
 
         Cell valueCell = new Cell()
@@ -294,7 +394,7 @@ public class PDFGenerator {
                         .setTextAlignment(TextAlignment.RIGHT))
                 .setPadding(5)
                 .setBorder(Border.NO_BORDER)
-                .setBorderTop(new SolidBorder(COLOR_PRIMARY, 1));
+                .setBorderTop(new SolidBorder(COLOR_GREEN, 1));
         table.addCell(valueCell);
     }
 
@@ -417,7 +517,7 @@ public class PDFGenerator {
      * @return le chemin complet du fichier
      */
     public static String generateFilePath(String typeRapport, String suffix) {
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS"));
         String fileName = typeRapport + "_" + timestamp;
         if (suffix != null && !suffix.isEmpty()) {
             fileName += "_" + suffix;
@@ -465,5 +565,33 @@ public class PDFGenerator {
      */
     public PdfFont getFontBold() {
         return fontBold;
+    }
+
+    /**
+     * Event handler pour ajouter les numeros de page en bas de chaque page A4.
+     */
+    public static class PageNumberEventHandler implements IEventHandler {
+        private final PdfFont font;
+
+        public PageNumberEventHandler(PdfFont font) {
+            this.font = font;
+        }
+
+        @Override
+        public void handleEvent(Event event) {
+            PdfDocumentEvent docEvent = (PdfDocumentEvent) event;
+            PdfDocument pdfDoc = docEvent.getDocument();
+            PdfPage page = docEvent.getPage();
+            int pageNumber = pdfDoc.getPageNumber(page);
+            Rectangle pageSize = page.getPageSize();
+
+            PdfCanvas canvas = new PdfCanvas(page.newContentStreamAfter(), page.getResources(), pdfDoc);
+            canvas.beginText()
+                    .setFontAndSize(font, 8)
+                    .moveText(pageSize.getWidth() / 2 - 15, 15)
+                    .showText("Page " + pageNumber)
+                    .endText();
+            canvas.release();
+        }
     }
 }
